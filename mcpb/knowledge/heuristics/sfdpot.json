@@ -1,0 +1,15 @@
+{
+  "name": "SFDPOT",
+  "source": "James Bach",
+  "category": "product elements",
+  "when_to_use": "Survey a product from several angles to generate coverage ideas and surface risk, especially when testing something unfamiliar.",
+  "letters": [
+    {"letter": "S", "description": "Structure — what the product is made of: files, modules, libraries, state. Can you test it piece by piece?"},
+    {"letter": "F", "description": "Function — what the product does: features, error handling, interfaces, non-visible behavior."},
+    {"letter": "D", "description": "Data — what it processes and produces: inputs, outputs, formats, defaults, constraints, persistence."},
+    {"letter": "P", "description": "Platform — what it depends on: OSes, browsers, third-party libraries, environment configuration."},
+    {"letter": "O", "description": "Operations — how it will be used: who uses it, in which roles, for what tasks, realistic usage patterns."},
+    {"letter": "T", "description": "Time — any relationship with time: timing, concurrency, fast/slow input, delays, schedule-sensitive behavior."}
+  ],
+  "example": "For a CSV import feature: Structure=the parser; Function=parse→dedupe→create; Data=encoding/malformed rows; Platform=browser upload; Operations=spreadsheet exports; Time=sync delay vs rows committed."
+}

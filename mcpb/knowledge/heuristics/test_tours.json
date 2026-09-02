@@ -1,0 +1,16 @@
+{
+  "name": "Test Tours",
+  "source": "Elisabeth Hendrickson",
+  "category": "exploratory",
+  "when_to_use": "Explore an application's territory systematically during exploratory testing.",
+  "letters": [
+    {"letter": "Guidebook", "description": "Follow the documented user path as the company intends it."},
+    {"letter": "Money", "description": "Test the parts that generate revenue or handle payments."},
+    {"letter": "Landmark", "description": "Head straight for the famous, central, most-used functions."},
+    {"letter": "Intellectual", "description": "Stress the complex logic that exercises the developers' minds."},
+    {"letter": "Back Alley", "description": "Use the application in ways it was not necessarily designed for."},
+    {"letter": "Foreign", "description": "Explore with unexpected data, locales, or user types."},
+    {"letter": "Adversarial", "description": "Attack the application's handling of hostile or malicious input."}
+  ],
+  "example": "Run the Back Alley tour on an admin panel to find undocumented paths and unhandled states."
+}

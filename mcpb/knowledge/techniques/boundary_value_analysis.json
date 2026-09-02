@@ -1,0 +1,12 @@
+{
+  "name": "Boundary Value Analysis",
+  "description": "Tests are designed at and around the edges of valid input ranges, where defects cluster.",
+  "when_to_use": "When an input or output has a defined numeric range, length limit, or count limit.",
+  "steps": [
+    "Identify each variable's valid range (min/max inclusive).",
+    "Select the boundary values: min, max, and one step above/below each.",
+    "Also select values just inside the valid range and just outside it.",
+    "For each selected value, define the expected outcome."
+  ],
+  "example": "An age field accepting 0..150: test -1, 0, 1, 149, 150, 151."
+}

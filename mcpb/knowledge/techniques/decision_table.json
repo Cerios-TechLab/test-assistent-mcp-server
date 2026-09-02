@@ -1,0 +1,13 @@
+{
+  "name": "Decision Table",
+  "description": "A table of conditions (inputs) and actions (outputs) covering all relevant combinations of true/false conditions.",
+  "when_to_use": "When business rules depend on combinations of conditions with clear reactions.",
+  "steps": [
+    "List all conditions as binary (or multi-valued) inputs.",
+    "List all possible actions.",
+    "Create a column for each relevant combination of conditions.",
+    "Mark which actions apply per combination; eliminate unfeasible combinations.",
+    "Turn each feasible column into a test."
+  ],
+  "example": "Order pricing: is member? is discount code valid? → action set for each of the 4 combinations."
+}

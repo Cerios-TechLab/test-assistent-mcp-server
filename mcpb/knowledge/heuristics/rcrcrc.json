@@ -1,0 +1,15 @@
+{
+  "name": "RCRCRC",
+  "source": "Karen N. Johnson",
+  "category": "regression",
+  "when_to_use": "Plan and prioritize regression testing after a change or bug fix.",
+  "letters": [
+    {"letter": "R", "description": "Recent — what new code or features were recently changed? Test around them."},
+    {"letter": "C", "description": "Core — which essential functions must keep working? Prioritize these."},
+    {"letter": "R", "description": "Risky — which features or code areas are inherently risky or historically buggy?"},
+    {"letter": "C", "description": "Configuration sensitive — what code depends on environment settings and could break?"},
+    {"letter": "R", "description": "Repaired — what was changed to fix defects, risking new issues?"},
+    {"letter": "C", "description": "Chronic — which areas break repeatedly? Give them more focus."}
+  ],
+  "example": "After a login fix: Recent=login change; Core=authn must still work; Risky=token refresh; Configuration=env-config timeouts; Repaired=the login fix; Chronic=the auth area that keeps regressing."
+}

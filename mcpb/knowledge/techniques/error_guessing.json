@@ -1,0 +1,12 @@
+{
+  "name": "Error Guessing",
+  "description": "Anticipate likely errors based on experience and intuition about where developers typically make mistakes.",
+  "when_to_use": "As a complement after systematic techniques; when testing familiar patterns or past bug areas.",
+  "steps": [
+    "List inputs and operations the system performs.",
+    "Brainstorm failure-prone situations (empty, null, zero, boundary, repeat, divide, concurrent, unauthorized).",
+    "Turn each suspicion into a test.",
+    "Prioritize by risk of the anticipated failure."
+  ],
+  "example": "Divide by zero, missing required field, resubmitting a form twice, expired session during a long action."
+}

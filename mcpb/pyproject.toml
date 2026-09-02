@@ -1,0 +1,18 @@
+[project]
+name = "test-assistent-mcp-server"
+version = "0.1.0"
+description = "MCP server for OpenCode that exposes classic test techniques and heuristics as tools."
+requires-python = ">=3.11"
+dependencies = [
+    "mcp==1.29.0",
+]
+
+[project.optional-dependencies]
+dev = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["server"]

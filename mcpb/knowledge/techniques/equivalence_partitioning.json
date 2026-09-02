@@ -1,0 +1,12 @@
+{
+  "name": "Equivalence Partitioning",
+  "description": "Divide inputs into groups (partitions) that a system is expected to treat the same; test one representative from each valid and invalid partition.",
+  "when_to_use": "When input can be grouped into logical classes whose members share expected behavior.",
+  "steps": [
+    "List all input conditions and their valid/invalid classes.",
+    "Define partitions such that values in one partition behave the same.",
+    "Pick one representative value per partition.",
+    "Design one test per partition, including invalid partitions."
+  ],
+  "example": "A login accepts an email: valid format, empty, malformed, registered, and unregistered are separate partitions."
+}

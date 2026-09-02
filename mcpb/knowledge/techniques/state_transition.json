@@ -1,0 +1,12 @@
+{
+  "name": "State Transition",
+  "description": "Model a system as states and the events that move it between them; test valid, invalid, and missing transitions.",
+  "when_to_use": "When behavior depends on a sequence of events or internal states.",
+  "steps": [
+    "Identify states, events, and resulting transitions.",
+    "Draw or tabulate the transition table.",
+    "Design tests for each legitimate transition and each invalid/blocked transition.",
+    "Include start-to-end and end-state tests."
+  ],
+  "example": "A payment goes Active → Processing → Paid; events like timeouts must not move it to Paid."
+}

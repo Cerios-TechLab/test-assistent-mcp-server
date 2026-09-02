@@ -1,0 +1,62 @@
+{
+  "manifest_version": "0.4",
+  "name": "test-assistent-mcp-server",
+  "display_name": "Test Assistant MCP Server",
+  "version": "0.1.0",
+  "description": "MCP server for OpenCode that exposes classic test techniques (BVA, EP, pairwise, decision table, state transition, use case, error guessing) and test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours) as tools.",
+  "long_description": "A knowledge-based MCP server for OpenCode agents that provides:\n\n- **catalog_techniques**: list all classic test techniques\n- **catalog_heuristics**: list all test heuristics\n- **generate_test_cases**: generate concrete testcases for BVA, EP, and pairwise testing\n- **advise_technique**: keyword-based recommendation of techniques and heuristics\n- **checklist_for**: produce a test checklist for a given context\n\nThe knowledge base (7 techniques + 6 heuristics) is bundled as JSON and loaded at startup.",
+  "author": {
+    "name": "Cerios TechLab",
+    "url": "https://github.com/Cerios-TechLab"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Cerios-TechLab/test-assistent-mcp-server.git"
+  },
+  "homepage": "https://github.com/Cerios-TechLab/test-assistent-mcp-server",
+  "support": "https://github.com/Cerios-TechLab/test-assistent-mcp-server/issues",
+  "server": {
+    "type": "uv",
+    "entry_point": "server/testassist_mcp_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "server/testassist_mcp_server.py"],
+      "env": {
+        "PYTHONPATH": "${__dirname}",
+        "TESTASSIST_KNOWLEDGE_DIR": "${__dirname}/knowledge"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "catalog_techniques",
+      "description": "List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing)."
+    },
+    {
+      "name": "catalog_heuristics",
+      "description": "List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours)."
+    },
+    {
+      "name": "generate_test_cases",
+      "description": "Generate concrete testcases for supported techniques (Boundary Value Analysis, Equivalence Partitioning, Pairwise Testing). Returns only testcases; the agent applies them."
+    },
+    {
+      "name": "advise_technique",
+      "description": "Recommend techniques and heuristics for a described testing context via keyword analysis."
+    },
+    {
+      "name": "checklist_for",
+      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC checklist for regression after a bug fix."
+    }
+  ],
+  "tools_generated": false,
+  "keywords": ["testing", "test-automation", "mcp", "opencode", "bva", "boundary-value-analysis", "equivalence-partitioning", "pairwise-testing", "test-heuristics", "sfdot", "few-hiccupps", "rcrcrc", "quality-assurance"],
+  "license": "MIT",
+  "privacy_policies": ["https://github.com/Cerios-TechLab/test-assistent-mcp-server/blob/main/LICENSE"],
+  "compatibility": {
+    "platforms": ["darwin", "linux", "win32"],
+    "runtimes": {
+      "python": ">=3.11"
+    }
+  }
+}
