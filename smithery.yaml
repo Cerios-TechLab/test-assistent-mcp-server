@@ -1,15 +1,23 @@
+name: test-assistent-mcp-server
+displayName: Test Assistant MCP Server
+description: MCP server for OpenCode that exposes classic test techniques (BVA, EP, pairwise, decision table, state transition, use case, error guessing) and test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours) as tools. Generates concrete testcases, advises on technique selection, and produces checklists.
+version: "0.1.0"
+author: Cerios TechLab
+homepage: https://github.com/Cerios-TechLab/test-assistent-mcp-server
+license: MIT
+categories:
+  - testing
+  - quality-assurance
+tags:
+  - testing
+  - test-automation
+  - mcp
+  - opencode
+runtime: python
 startCommand:
   type: stdio
-  configSchema:
-    # MCP server config fields to be passed through to the server as env vars.
-    type: object
-    additionalProperties: true
-    properties: {}
-  commandFunction:
-    # A function that produces the CLI command to start this MCP server.
-    |-
-      (config) => ({
-        command: 'python',
-        args: ['-m', 'server.testassist_mcp_server'],
-        env: { ...config }
-      })
+  command:
+    - python
+    - -m
+    - server.testassist_mcp_server
+  env: {}
