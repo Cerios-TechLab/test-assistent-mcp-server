@@ -1,0 +1,12 @@
+{
+  "name": "Pairwise Testing",
+  "description": "Systematically covers all pairs of parameter values rather than all combinations, reducing test count while catching most interaction defects.",
+  "when_to_use": "When many parameters with many values make exhaustive combination testing impractical.",
+  "steps": [
+    "List each parameter and its values.",
+    "Generate a subset of value combinations so that every pair of values across parameters appears at least once.",
+    "Fill remaining cells to maximize coverage.",
+    "Convert each generated row into a test."
+  ],
+  "example": "Browser (3) x OS (3) x Screen (2) = 18 rows instead of 3*3*2 = 18 full — pairwise keeps it near-minimal while covering every pair."
+}

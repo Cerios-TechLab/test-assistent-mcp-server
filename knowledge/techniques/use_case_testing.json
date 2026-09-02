@@ -1,0 +1,12 @@
+{
+  "name": "Use Case Testing",
+  "description": "Tests derived from use cases, covering the main flow and alternative/exception flows from an actor's perspective.",
+  "when_to_use": "When requirements are expressed as use cases or user journeys.",
+  "steps": [
+    "Identify the primary actor and the use case's main (happy) flow.",
+    "Extend to alternative flows and exception flows.",
+    "Design a test for each flow.",
+    "Include preconditions and postconditions."
+  ],
+  "example": "For 'Patient books appointment': main flow books successfully; alternative adds insurance; exception covers no slots available."
+}
