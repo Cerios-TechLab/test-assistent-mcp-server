@@ -13,5 +13,9 @@ def test_all_heuristics_well_formed():
     assert set(names) == EXPECTED
     for h in kb.list_heuristics():
         assert REQUIRED.issubset(h.keys())
-        assert isinstance(h["letters"], dict) and h["letters"]
         assert isinstance(h["source"], str) and isinstance(h["category"], str)
+        assert isinstance(h["letters"], list) and h["letters"]
+        for entry in h["letters"]:
+            assert isinstance(entry, dict) and {"letter", "description"}.issubset(entry)
+        assert isinstance(h["example"], str) and h["example"]
+        assert isinstance(h["when_to_use"], str) and h["when_to_use"]
