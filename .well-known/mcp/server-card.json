@@ -1,0 +1,61 @@
+{
+  "name": "test-assistent-mcp-server",
+  "version": "0.1.0",
+  "description": "Test assistant MCP server for OpenCode — exposes classic test techniques and test heuristics as tools, backed by a local knowledge base.",
+  "tools": [
+    {
+      "name": "catalog_techniques",
+      "description": "List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing)."
+    },
+    {
+      "name": "catalog_heuristics",
+      "description": "List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours)."
+    },
+    {
+      "name": "generate_test_cases",
+      "description": "Generate concrete testcases for supported techniques (Boundary Value Analysis, Equivalence Partitioning, Pairwise Testing). Only returns testcases; the agent does the rest.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "technique": {
+            "type": "string",
+            "description": "The technique name: 'Boundary Value Analysis', 'Equivalence Partitioning', or 'Pairwise Testing'"
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Technique-specific inputs, e.g. {field: 'age', min: 0, max: 150} for BVA"
+          }
+        },
+        "required": ["technique", "inputs"]
+      }
+    },
+    {
+      "name": "advise_technique",
+      "description": "Recommend techniques and heuristics for a described testing context via keyword analysis.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Free-text description of the testing context or problem"
+          }
+        },
+        "required": ["description"]
+      }
+    },
+    {
+      "name": "checklist_for",
+      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "string",
+            "description": "The testing context, e.g. 'regression', 'exploratory testing', 'no specification'"
+          }
+        },
+        "required": ["context"]
+      }
+    }
+  ]
+}
