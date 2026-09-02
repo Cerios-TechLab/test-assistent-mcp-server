@@ -14,7 +14,7 @@
 - Dependency: `mcp==1.29.0` (same as visio-mcp). FastMCP import: `from mcp.server.fastmcp import FastMCP`. Server entry: `mcp.run(transport="stdio")`.
 - Knowledge lives in `knowledge/` as JSON — never hardcode technique/heuristic content into the server code.
 - JSON schema for technique entries: keys `name`, `description`, `when_to_use`, `steps` (list), `example` (string).
-- JSON schema for heuristic entries: keys `name`, `source`, `category`, `when_to_use`, `letters` (object letter→description), `example`.
+- JSON schema for heuristic entries: keys `name`, `source`, `category`, `when_to_use`, `letters` (an ordered LIST of `{"letter": str, "description": str}` objects — mnemonics can repeat letters, so a dict would silently drop duplicates), `example`.
 - All content is original formulation (own wording) — do NOT copy copyrighted material verbatim.
 - Use `pytest` from the venv; tests live under `tests/`.
 - Commit after each task with a descriptive message.
@@ -84,7 +84,10 @@ FIXTURE = {
             "source": "Karen N. Johnson",
             "category": "regression",
             "when_to_use": "Planning regression tests.",
-            "letters": {"R": "Recent", "C": "Core"},
+            "letters": [
+                {"letter": "R", "description": "Recent"},
+                {"letter": "C", "description": "Core"},
+            ],
             "example": "Recent changes are risk-prone.",
         }
     },
@@ -437,8 +440,12 @@ def test_all_heuristics_well_formed():
     assert set(names) == EXPECTED
     for h in kb.list_heuristics():
         assert REQUIRED.issubset(h.keys())
-        assert isinstance(h["letters"], dict) and h["letters"]
         assert isinstance(h["source"], str) and isinstance(h["category"], str)
+        assert isinstance(h["letters"], list) and h["letters"]
+        for entry in h["letters"]:
+            assert isinstance(entry, dict) and {"letter", "description"}.issubset(entry)
+        assert isinstance(h["example"], str) and h["example"]
+        assert isinstance(h["when_to_use"], str) and h["when_to_use"]
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -455,14 +462,14 @@ Expected: FAIL — empty `knowledge/heuristics/`.
   "source": "James Bach",
   "category": "product elements",
   "when_to_use": "Survey a product from several angles to generate coverage ideas and surface risk, especially when testing something unfamiliar.",
-  "letters": {
-    "S": "Structure — what the product is made of: files, modules, libraries, state. Can you test it piece by piece?",
-    "F": "Function — what the product does: features, error handling, interfaces, non-visible behavior.",
-    "D": "Data — what it processes and produces: inputs, outputs, formats, defaults, constraints, persistence.",
-    "P": "Platform — what it depends on: OSes, browsers, third-party libraries, environment configuration.",
-    "O": "Operations — how it will be used: who uses it, in which roles, for what tasks, realistic usage patterns.",
-    "T": "Time — any relationship with time: timing, concurrency, fast/slow input, delays, schedule-sensitive behavior."
-  },
+  "letters": [
+    {"letter": "S", "description": "Structure — what the product is made of: files, modules, libraries, state. Can you test it piece by piece?"},
+    {"letter": "F", "description": "Function — what the product does: features, error handling, interfaces, non-visible behavior."},
+    {"letter": "D", "description": "Data — what it processes and produces: inputs, outputs, formats, defaults, constraints, persistence."},
+    {"letter": "P", "description": "Platform — what it depends on: OSes, browsers, third-party libraries, environment configuration."},
+    {"letter": "O", "description": "Operations — how it will be used: who uses it, in which roles, for what tasks, realistic usage patterns."},
+    {"letter": "T", "description": "Time — any relationship with time: timing, concurrency, fast/slow input, delays, schedule-sensitive behavior."}
+  ],
   "example": "For a CSV import feature: Structure=the parser; Function=parse→dedupe→create; Data=encoding/malformed rows; Platform=browser upload; Operations=spreadsheet exports; Time=sync delay vs rows committed."
 }
 ```
@@ -474,19 +481,19 @@ Expected: FAIL — empty `knowledge/heuristics/`.
   "source": "James Bach & Michael Bolton",
   "category": "oracles",
   "when_to_use": "Recognize problems when there is no spec, or the spec is thin, by checking consistency with known or plausible expectations.",
-  "letters": {
-    "F": "Familiarity — does the system match a pattern of familiar problems?",
-    "E": "Explainability — can the behavior be explained clearly to ourselves and others?",
-    "W": "World — is it consistent with what we know about the world?",
-    "H": "History — is it consistent with past versions of itself?",
-    "I": "Image — does it fit the image/brand the organization wants to project?",
-    "C": "Comparable products — is it consistent with comparable products or processes?",
-    "C": "Claims — is it consistent with what important people say it should do (docs, specs, meetings)?",
-    "U": "User Desires — is it consistent with what reasonable users would want?",
-    "P": "Product — is each element consistent with comparable elements in the same product?",
-    "P": "Purpose — is it consistent with its explicit and implicit purposes?",
-    "S": "Statutes & Standards — is it consistent with relevant laws, regulations, and standards?"
-  },
+  "letters": [
+    {"letter": "F", "description": "Familiarity — does the system match a pattern of familiar problems?"},
+    {"letter": "E", "description": "Explainability — can the behavior be explained clearly to ourselves and others?"},
+    {"letter": "W", "description": "World — is it consistent with what we know about the world?"},
+    {"letter": "H", "description": "History — is it consistent with past versions of itself?"},
+    {"letter": "I", "description": "Image — does it fit the image/brand the organization wants to project?"},
+    {"letter": "C", "description": "Comparable products — is it consistent with comparable products or processes?"},
+    {"letter": "C", "description": "Claims — is it consistent with what important people say it should do (docs, specs, meetings)?"},
+    {"letter": "U", "description": "User Desires — is it consistent with what reasonable users would want?"},
+    {"letter": "P", "description": "Product — is each element consistent with comparable elements in the same product?"},
+    {"letter": "P", "description": "Purpose — is it consistent with its explicit and implicit purposes?"},
+    {"letter": "S", "description": "Statutes & Standards — is it consistent with relevant laws, regulations, and standards?"}
+  ],
   "example": "New version changed behavior with no stated reason → History oracle flags a likely problem."
 }
 ```
@@ -498,14 +505,14 @@ Expected: FAIL — empty `knowledge/heuristics/`.
   "source": "Karen N. Johnson",
   "category": "regression",
   "when_to_use": "Plan and prioritize regression testing after a change or bug fix.",
-  "letters": {
-    "R": "Recent — what new code or features were recently changed? Test around them.",
-    "C": "Core — which essential functions must keep working? Prioritize these.",
-    "R": "Risky — which features or code areas are inherently risky or historically buggy?",
-    "C": "Configuration sensitive — what code depends on environment settings and could break?",
-    "R": "Repaired — what was changed to fix defects, risking new issues?",
-    "C": "Chronic — which areas break repeatedly? Give them more focus."
-  },
+  "letters": [
+    {"letter": "R", "description": "Recent — what new code or features were recently changed? Test around them."},
+    {"letter": "C", "description": "Core — which essential functions must keep working? Prioritize these."},
+    {"letter": "R", "description": "Risky — which features or code areas are inherently risky or historically buggy?"},
+    {"letter": "C", "description": "Configuration sensitive — what code depends on environment settings and could break?"},
+    {"letter": "R", "description": "Repaired — what was changed to fix defects, risking new issues?"},
+    {"letter": "C", "description": "Chronic — which areas break repeatedly? Give them more focus."}
+  ],
   "example": "After a login fix: Recent=login change; Core=authn must still work; Risky=token refresh; Configuration=env-config timeouts; Repaired=the login fix; Chronic=the auth area that keeps regressing."
 }
 ```
@@ -517,16 +524,16 @@ Expected: FAIL — empty `knowledge/heuristics/`.
   "source": "HTSM (James Bach)",
   "category": "quality",
   "when_to_use": "Ask what 'good enough to ship' means for a specific feature, beyond 'it does not crash'.",
-  "letters": {
-    "Capability": "Does it do the job it exists for?",
-    "Reliability": "Does it hold up under load, interruption, and failure?",
-    "Usability": "Can the intended users operate it effectively?",
-    "Performance": "Is it fast and responsive enough?",
-    "Security": "Does it protect data and resist misuse?",
-    "Compatibility": "Does it work across platforms, browsers, devices?",
-    "Maintainability": "Can it be understood, changed, and tested easily?",
-    "Accessibility": "Can people with disabilities use it?"
-  },
+  "letters": [
+    {"letter": "Capability", "description": "Does it do the job it exists for?"},
+    {"letter": "Reliability", "description": "Does it hold up under load, interruption, and failure?"},
+    {"letter": "Usability", "description": "Can the intended users operate it effectively?"},
+    {"letter": "Performance", "description": "Is it fast and responsive enough?"},
+    {"letter": "Security", "description": "Does it protect data and resist misuse?"},
+    {"letter": "Compatibility", "description": "Does it work across platforms, browsers, devices?"},
+    {"letter": "Maintainability", "description": "Can it be understood, changed, and tested easily?"},
+    {"letter": "Accessibility", "description": "Can people with disabilities use it?"}
+  ],
   "example": "For an import feature, the weightiest criteria are usually performance, reliability, and data integrity."
 }
 ```
@@ -538,17 +545,17 @@ Expected: FAIL — empty `knowledge/heuristics/`.
   "source": "community (RST tradition)",
   "category": "bug discovery",
   "when_to_use": "Generate bug ideas around common failure modes while exploring a feature.",
-  "letters": {
-    "Empty": "What happens with no data, empty fields, or zero results?",
-    "Null": "What happens with missing/None values where data is expected?",
-    "Zero": "What happens with zero, division by zero, or zero-length input?",
-    "Repeat": "What happens when the same operation is done twice?",
-    "Boundary": "What happens at the edges of ranges and limits?",
-    "Concurrency": "What happens when multiple things happen at once?",
-    "Single": "What happens with a single element or single user?",
-    "Wrong type": "What happens when input is of the wrong type or format?",
-    "Unauthorized": "What happens when access is attempted without permission?"
-  },
+  "letters": [
+    {"letter": "Empty", "description": "What happens with no data, empty fields, or zero results?"},
+    {"letter": "Null", "description": "What happens with missing/None values where data is expected?"},
+    {"letter": "Zero", "description": "What happens with zero, division by zero, or zero-length input?"},
+    {"letter": "Repeat", "description": "What happens when the same operation is done twice?"},
+    {"letter": "Boundary", "description": "What happens at the edges of ranges and limits?"},
+    {"letter": "Concurrency", "description": "What happens when multiple things happen at once?"},
+    {"letter": "Single", "description": "What happens with a single element or single user?"},
+    {"letter": "Wrong type", "description": "What happens when input is of the wrong type or format?"},
+    {"letter": "Unauthorized", "description": "What happens when access is attempted without permission?"}
+  ],
   "example": "Test resubmitting a form after a session expires, or importing an empty CSV file."
 }
 ```
@@ -560,15 +567,15 @@ Expected: FAIL — empty `knowledge/heuristics/`.
   "source": "Elisabeth Hendrickson",
   "category": "exploratory",
   "when_to_use": "Explore an application's territory systematically during exploratory testing.",
-  "letters": {
-    "Guidebook": "Follow the documented user path as the company intends it.",
-    "Money": "Test the parts that generate revenue or handle payments.",
-    "Landmark": "Head straight for the famous, central, most-used functions.",
-    "Intellectual": "Stress the complex logic that exercises the developers' minds.",
-    "Back Alley": "Use the application in ways it was not necessarily designed for.",
-    "Foreign": "Explore with unexpected data, locales, or user types.",
-    "Adversarial": "Attack the application's handling of hostile or malicious input."
-  },
+  "letters": [
+    {"letter": "Guidebook", "description": "Follow the documented user path as the company intends it."},
+    {"letter": "Money", "description": "Test the parts that generate revenue or handle payments."},
+    {"letter": "Landmark", "description": "Head straight for the famous, central, most-used functions."},
+    {"letter": "Intellectual", "description": "Stress the complex logic that exercises the developers' minds."},
+    {"letter": "Back Alley", "description": "Use the application in ways it was not necessarily designed for."},
+    {"letter": "Foreign", "description": "Explore with unexpected data, locales, or user types."},
+    {"letter": "Adversarial", "description": "Attack the application's handling of hostile or malicious input."}
+  ],
   "example": "Run the Back Alley tour on an admin panel to find undocumented paths and unhandled states."
 }
 ```
@@ -830,7 +837,7 @@ def checklist(kb: KnowledgeBase, context: str) -> dict[str, Any]:
     if best is None or best_score == 0:
         return {"heuristic": None, "items": []}
     heuristic = kb.get_heuristic(best)
-    items = [f"{letter} — {desc}" for letter, desc in heuristic["letters"].items()]
+    items = [f"{entry['letter']} — {entry['description']}" for entry in heuristic["letters"]]
     return {"heuristic": best, "items": items}
 ```
 
