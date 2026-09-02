@@ -1,0 +1,15 @@
+startCommand:
+  type: stdio
+  configSchema:
+    # MCP server config fields to be passed through to the server as env vars.
+    type: object
+    additionalProperties: true
+    properties: {}
+  commandFunction:
+    # A function that produces the CLI command to start this MCP server.
+    |-
+      (config) => ({
+        command: 'python',
+        args: ['-m', 'server.testassist_mcp_server'],
+        env: { ...config }
+      })
