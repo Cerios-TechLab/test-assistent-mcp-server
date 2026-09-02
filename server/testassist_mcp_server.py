@@ -33,12 +33,15 @@ def _load_kb() -> KnowledgeBase:
 
 def _build_tools(kb: KnowledgeBase) -> dict[str, Callable[..., Any]]:
     def catalog_techniques() -> dict[str, Any]:
+        """List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing)."""
         return {"techniques": kb.list_techniques()}
 
     def catalog_heuristics() -> dict[str, Any]:
+        """List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours)."""
         return {"heuristics": kb.list_heuristics()}
 
     def generate_test_cases(technique: str, inputs: dict) -> dict[str, Any]:
+        """Generate concrete testcases for a supported technique. Only returns testcases; the agent does the rest."""
         generator = _TECHNIQUE_GENERATORS.get(technique)
         if generator is None:
             supported = ", ".join(sorted(_TECHNIQUE_GENERATORS))
@@ -50,9 +53,11 @@ def _build_tools(kb: KnowledgeBase) -> dict[str, Callable[..., Any]]:
         return {"technique": technique, "testcases": cases}
 
     def advise_technique(description: str) -> dict[str, Any]:
+        """Recommend techniques and heuristics for a described testing context via keyword analysis."""
         return advise(kb, description)
 
     def checklist_for(context: str) -> dict[str, Any]:
+        """Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression."""
         return checklist(kb, context)
 
     return {
