@@ -1,0 +1,17 @@
+{
+  "name": "Quality Criteria Catalog",
+  "source": "HTSM (James Bach)",
+  "category": "quality",
+  "when_to_use": "Ask what 'good enough to ship' means for a specific feature, beyond 'it does not crash'.",
+  "letters": {
+    "Capability": "Does it do the job it exists for?",
+    "Reliability": "Does it hold up under load, interruption, and failure?",
+    "Usability": "Can the intended users operate it effectively?",
+    "Performance": "Is it fast and responsive enough?",
+    "Security": "Does it protect data and resist misuse?",
+    "Compatibility": "Does it work across platforms, browsers, devices?",
+    "Maintainability": "Can it be understood, changed, and tested easily?",
+    "Accessibility": "Can people with disabilities use it?"
+  },
+  "example": "For an import feature, the weightiest criteria are usually performance, reliability, and data integrity."
+}

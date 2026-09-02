@@ -1,0 +1,20 @@
+{
+  "name": "FEW HICCUPPS",
+  "source": "James Bach & Michael Bolton",
+  "category": "oracles",
+  "when_to_use": "Recognize problems when there is no spec, or the spec is thin, by checking consistency with known or plausible expectations.",
+  "letters": {
+    "F": "Familiarity — does the system match a pattern of familiar problems?",
+    "E": "Explainability — can the behavior be explained clearly to ourselves and others?",
+    "W": "World — is it consistent with what we know about the world?",
+    "H": "History — is it consistent with past versions of itself?",
+    "I": "Image — does it fit the image/brand the organization wants to project?",
+    "C": "Comparable products — is it consistent with comparable products or processes?",
+    "C": "Claims — is it consistent with what important people say it should do (docs, specs, meetings)?",
+    "U": "User Desires — is it consistent with what reasonable users would want?",
+    "P": "Product — is each element consistent with comparable elements in the same product?",
+    "P": "Purpose — is it consistent with its explicit and implicit purposes?",
+    "S": "Statutes & Standards — is it consistent with relevant laws, regulations, and standards?"
+  },
+  "example": "New version changed behavior with no stated reason → History oracle flags a likely problem."
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Bug Heuristics",
+  "source": "community (RST tradition)",
+  "category": "bug discovery",
+  "when_to_use": "Generate bug ideas around common failure modes while exploring a feature.",
+  "letters": {
+    "Empty": "What happens with no data, empty fields, or zero results?",
+    "Null": "What happens with missing/None values where data is expected?",
+    "Zero": "What happens with zero, division by zero, or zero-length input?",
+    "Repeat": "What happens when the same operation is done twice?",
+    "Boundary": "What happens at the edges of ranges and limits?",
+    "Concurrency": "What happens when multiple things happen at once?",
+    "Single": "What happens with a single element or single user?",
+    "Wrong type": "What happens when input is of the wrong type or format?",
+    "Unauthorized": "What happens when access is attempted without permission?"
+  },
+  "example": "Test resubmitting a form after a session expires, or importing an empty CSV file."
+}
