@@ -4,11 +4,8 @@ version = "0.1.0"
 description = "MCP server for OpenCode that exposes classic test techniques and heuristics as tools."
 requires-python = ">=3.11"
 dependencies = [
-    "mcp==1.29.0",
+    "mcp>=1.29.0,<2",
 ]
-
-[project.optional-dependencies]
-dev = []
 
 [build-system]
 requires = ["hatchling"]

@@ -45,7 +45,15 @@ Al deze kennis leeft als JSON in de map `knowledge/` en wordt gelezen door de se
 - Python **3.11** (gebruik `/usr/bin/python3.11`, niet een ouder `python3`).
 - venv-ondersteuning en `pip`.
 
-### Stappen
+### Via Smithery (aanbevolen)
+
+```bash
+npx -y smithery mcp add djsteavy/test-assistent-mcp-server
+```
+
+Dit installeert de server via de Smithery registry. De server draait lokaal als stdio-proces.
+
+### Via GitHub clone
 
 ```bash
 # 1. Kloon of ga naar de repo
@@ -59,7 +67,13 @@ cd test-assistent-mcp-server
 .venv/bin/pip install -e '.[dev]'
 ```
 
-De enige runtime-afhankelijkheid is `mcp==1.29.0`; `pytest` is een dev-afhankelijkheid.
+De enige runtime-afhankelijkheid is `mcp>=1.29.0,<2` (pinned wegens FastMCP API-wijziging in 2.x); `pytest` is een dev-afhankelijkheid.
+
+### Smithery registry
+
+De server is gepubliceerd op Smithery: https://smithery.ai/servers/djsteavy/test-assistent-mcp-server
+
+Het MCPB-distributieformaat (in `mcpb/`) is bedoeld voor toekomstige Smithery CLI-ondersteuning.
 
 ## Werking
 
@@ -132,15 +146,19 @@ Dit eindigt met exit-code 0 bij een geldige kennisbasis en met een fout bij een 
 ## Projectstructuur
 
 ```
-server/
-    knowledge_base.py          # laadt en ontsluit de JSON-kennisbasis
-    generators.py              # pure testcase-generatie (BVA, EP, pairwise)
-    advisor.py                 # keyword-gebaseerde advise/checklist-logica
-    testassist_mcp_server.py   # FastMCP stdio-server die de 5 tools wiret
-knowledge/
-    techniques/                # 7 techniekbestanden (JSON)
-    heuristics/                # 6 heuristiekbestanden (JSON)
-scripts/
-    harvest.py                 # valideert kennisbasis en print index
-tests/                         # pytest-suite
+test-assistent-mcp-server/
+├── server/
+│   ├── knowledge_base.py          # laadt en ontsluit de JSON-kennisbasis
+│   ├── generators.py             # pure testcase-generatie (BVA, EP, pairwise)
+│   ├── advisor.py                # keyword-gebaseerde advise/checklist-logica
+│   └── testassist_mcp_server.py # FastMCP stdio-server die de 5 tools wiret
+├── knowledge/
+│   ├── techniques/               # 7 techniekbestanden (JSON)
+│   └── heuristics/              # 6 heuristiekbestanden (JSON)
+├── mcpb/                        # Smithery MCPB distributie-bundle
+│   ├── manifest.json            # MCPB v0.4 manifest
+│   └── server/                  # kopie van server/ + knowledge/ voor distributie
+├── scripts/
+│   └── harvest.py               # valideert kennisbasis en print index
+└── tests/                        # pytest-suite
 ```
