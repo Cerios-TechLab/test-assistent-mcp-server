@@ -85,20 +85,6 @@
       }
     },
     {
-      "name": "checklist_for",
-      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "context": {
-            "type": "string",
-            "description": "The testing context, e.g. 'regression', 'exploratory testing', 'no specification'"
-          }
-        },
-        "required": ["context"]
-      }
-    },
-    {
       "name": "generate_with_property",
       "description": "Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data.",
       "inputSchema": {
