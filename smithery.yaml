@@ -1,7 +1,7 @@
 name: test-assistent-mcp-server
 displayName: Test Assistant MCP Server
-description: MCP server for OpenCode that exposes classic test techniques and test heuristics as tools. Supports BVA, equivalence partitioning, pairwise testing, decision tables, state transitions, use cases, and error guessing — plus heuristics like SFDPOT, FEW HICCUPPS, RCRCRC.
-version: "0.1.0"
+description: MCP server for OpenCode that exposes classic test techniques, test heuristics, and property-based test data generation (boundary, random, seed) as tools. Supports BVA, equivalence partitioning, pairwise testing, decision tables, state transitions, use cases, error guessing, SFDPOT, FEW HICCUPPS, RCRCRC, and more.
+version: "0.2.0"
 author: Cerios TechLab
 homepage: https://github.com/Cerios-TechLab/test-assistent-mcp-server
 license: MIT
@@ -13,6 +13,7 @@ tags:
   - test-automation
   - mcp
   - opencode
+  - property-based-testing
 runtime: python
 startCommand:
   type: stdio
