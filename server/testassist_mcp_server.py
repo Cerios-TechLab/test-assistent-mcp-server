@@ -8,6 +8,11 @@ from typing import Any, Callable
 from mcp.server.fastmcp import FastMCP
 
 from server.advisor import advise, checklist
+from server.generate import (
+    generate_boundary_cases as generate_boundary_cases_fn,
+    generate_random as generate_random_fn,
+    generate_with_property as generate_with_property_fn,
+)
 from server.generators import (
     generate_boundary_value_analysis,
     generate_equivalence_partitioning,
@@ -60,10 +65,28 @@ def _build_tools(kb: KnowledgeBase) -> dict[str, Callable[..., Any]]:
         """Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression."""
         return checklist(kb, context)
 
+    def generate_with_property(spec: dict) -> dict[str, Any]:
+        """Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data."""
+        cases = generate_with_property_fn(spec)
+        return {"field": spec.get("field"), "type": spec.get("type", "string"), "cases": cases}
+
+    def generate_boundary_cases(spec: dict) -> dict[str, Any]:
+        """Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery."""
+        cases = generate_boundary_cases_fn(spec)
+        return {"field": spec.get("field"), "type": spec.get("type", "integer"), "cases": cases}
+
+    def generate_random(spec: dict) -> dict[str, Any]:
+        """Generate constrained random test data for multiple fields with optional seed for reproducibility."""
+        cases = generate_random_fn(spec)
+        return {"cases": cases}
+
     return {
         "catalog_techniques": catalog_techniques,
         "catalog_heuristics": catalog_heuristics,
         "generate_test_cases": generate_test_cases,
+        "generate_with_property": generate_with_property,
+        "generate_boundary_cases": generate_boundary_cases,
+        "generate_random": generate_random,
         "advise_technique": advise_technique,
         "checklist_for": checklist_for,
     }
