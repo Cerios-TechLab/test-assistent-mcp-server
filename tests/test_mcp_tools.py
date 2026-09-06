@@ -4,11 +4,13 @@ from server.testassist_mcp_server import _build_tools
 from server.knowledge_base import KnowledgeBase
 
 
-def test_build_tools_exposes_five():
+def test_build_tools_exposes_eight():
     kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
     tools = _build_tools(kb)
     assert set(tools) == {"catalog_techniques", "catalog_heuristics",
-                          "generate_test_cases", "advise_technique", "checklist_for"}
+                          "generate_test_cases", "generate_with_property",
+                          "generate_boundary_cases", "generate_random",
+                          "advise_technique", "checklist_for"}
 
 
 def test_generate_test_cases_bva():
