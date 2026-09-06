@@ -49,7 +49,18 @@ def load_tools() -> list[dict]:
     return tools
 
 
-def build_payload(manifest: dict, tools: list[dict]) -> dict:
+def load_server_meta() -> dict:
+    """Read server-level metadata (displayName, description) from server-card.json."""
+    card = json.loads((REPO_ROOT / "server-card.json").read_text(encoding="utf-8"))
+    meta = {}
+    if card.get("displayName"):
+        meta["displayName"] = card["displayName"]
+    if card.get("description"):
+        meta["description"] = card["description"]
+    return meta
+
+
+def build_payload(manifest: dict, tools: list[dict], meta: dict) -> dict:
     runtime = "python" if manifest.get("server", {}).get("type") == "python" else "node"
     user_config = manifest.get("user_config", {})
     config_schema = None
@@ -62,17 +73,37 @@ def build_payload(manifest: dict, tools: list[dict]) -> dict:
                 "description": field.get("description"),
                 "default": field.get("default"),
             }
+    server_card = {
+        "serverInfo": {"name": manifest["name"], "version": manifest["version"]},
+        "tools": tools,
+        "resources": [],
+        "prompts": [],
+    }
+    if meta.get("description"):
+        server_card["description"] = meta["description"]
+    if meta.get("displayName"):
+        server_card["displayName"] = meta["displayName"]
     return {
         "type": "stdio",
         "runtime": runtime,
-        "serverCard": {
-            "serverInfo": {"name": manifest["name"], "version": manifest["version"]},
-            "tools": tools,
-            "resources": [],
-            "prompts": [],
-        },
+        "serverCard": server_card,
         **({"configSchema": config_schema} if config_schema else {}),
     }
+
+
+def patch_server_metadata(api_key: str, qualified_name: str, meta: dict) -> None:
+    """Persist displayName/description on the server record so they survive re-deploys."""
+    if not meta:
+        return
+    status, body = api_request(
+        "PATCH", f"{API_BASE}/servers/{qualified_name}", api_key,
+        body=json.dumps(meta).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    if status == 200:
+        print("Server metadata (displayName/description) synced")
+    else:
+        print(f"WARN: metadata patch returned {status}: {body[:200]}")
 
 
 def api_request(method: str, url: str, api_key: str, body=None, headers=None) -> tuple[int, str]:
@@ -163,12 +194,14 @@ def main() -> None:
             ["unzip", "-p", str(bundle_path), "manifest.json"], capture_output=True, text=True, check=True
         ).stdout
     )
+    meta = load_server_meta()
     tools = load_tools()
-    payload = build_payload(manifest, tools)
+    payload = build_payload(manifest, tools, meta)
 
     print(f"Publishing {args.name} (stdio) to Smithery Registry...")
     ensure_server(api_key, args.name)
     result = deploy_release(api_key, args.name, bundle_path, payload)
+    patch_server_metadata(api_key, args.name, meta)
     print(f"Release {result.get('deploymentId')} accepted")
     if result.get("mcpUrl"):
         print(f"  MCP URL: {result['mcpUrl']}")

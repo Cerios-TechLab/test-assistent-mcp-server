@@ -1,6 +1,7 @@
 {
   "name": "test-assistent-mcp-server",
   "version": "0.2.0",
+  "displayName": "Test Assistent MCP Server",
   "description": "Test assistant MCP server for OpenCode — exposes classic test techniques, test heuristics, and property-based test data generation (boundary, random, seed) as tools, backed by a local knowledge base.",
   "tools": [
     {
