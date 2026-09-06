@@ -80,7 +80,9 @@ De enige runtime-afhankelijkheid is `mcp>=1.29.0,<2` (pinned wegens FastMCP API-
 
 De server is gepubliceerd op Smithery: https://smithery.ai/servers/djsteavy/test-assistent-mcp-server
 
-Het MCPB-distributieformaat (in `mcpb/`) is bedoeld voor toekomstige Smithery CLI-ondersteuning.
+De distributie loopt als MCPB-bundel (in `mcpb/`, gepacked naar `.mcpb`). Elke push naar `main` publiceert opnieuw via de workflow `.github/workflows/smithery-deploy.yml` (`scripts/smithery-deploy.py`, vereist `SMITHERY_API_KEY`-secret). Tool-schema's staan los van de MCPB-manifest in `server-card.json`, omdat de MCPB-spec geen `inputSchema` op tools toestaat maar Smithery ze in de deploy-payload verwacht.
+
+Daarnaast houdt `.github/workflows/glama-build-gate.yml` de Glama-listing groen: Glama synct automatisch vanuit GitHub, en deze workflow bouwt de Dockerfile, draait de tests en een MCP-`tools/list`-smoketest zodat Glama's build (die de server in eigen sandbox bouwt) nooit faalt. De Dockerfile is een stdio-server; Glama injecteert zelf de transport-shim.
 
 ## Werking
 

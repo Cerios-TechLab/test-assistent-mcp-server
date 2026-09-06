@@ -10,7 +10,6 @@ docs/
 tests/
 server/venv/
 .mcpbignore
-manifest.json
 README.md
 AGENTS.md
 .plan/

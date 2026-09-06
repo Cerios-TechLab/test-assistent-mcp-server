@@ -20,7 +20,9 @@
     "entry_point": "server/testassist_mcp_server.py",
     "mcp_config": {
       "command": "python",
-      "args": ["server/testassist_mcp_server.py"],
+      "args": [
+        "server/testassist_mcp_server.py"
+      ],
       "env": {
         "PYTHONPATH": "${__dirname}",
         "TESTASSIST_KNOWLEDGE_DIR": "${__dirname}/knowledge"
@@ -30,107 +32,55 @@
   "tools": [
     {
       "name": "catalog_techniques",
-      "description": "List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing).",
-      "inputSchema": {"type": "object", "properties": {}}
+      "description": "List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing)."
     },
     {
       "name": "catalog_heuristics",
-      "description": "List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours).",
-      "inputSchema": {"type": "object", "properties": {}}
+      "description": "List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours)."
     },
     {
       "name": "generate_test_cases",
-      "description": "Generate concrete testcases for supported techniques (Boundary Value Analysis, Equivalence Partitioning, Pairwise Testing). Returns only testcases; the agent applies them.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "technique": {
-            "type": "string",
-            "description": "The technique name: 'Boundary Value Analysis', 'Equivalence Partitioning', or 'Pairwise Testing'"
-          },
-          "inputs": {
-            "type": "object",
-            "description": "Technique-specific inputs, e.g. {field: 'age', min: 0, max: 150} for BVA"
-          }
-        },
-        "required": ["technique", "inputs"]
-      }
+      "description": "Generate concrete testcases for supported techniques (Boundary Value Analysis, Equivalence Partitioning, Pairwise Testing). Returns only testcases; the agent applies them."
     },
     {
       "name": "advise_technique",
-      "description": "Recommend techniques and heuristics for a described testing context via keyword analysis.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "description": {
-            "type": "string",
-            "description": "Free-text description of the testing context or problem"
-          }
-        },
-        "required": ["description"]
-      }
+      "description": "Recommend techniques and heuristics for a described testing context via keyword analysis."
     },
     {
       "name": "checklist_for",
-      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "context": {
-            "type": "string",
-            "description": "The testing context, e.g. 'regression', 'exploratory testing', 'no specification'"
-          }
-        },
-        "required": ["context"]
-      }
+      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix."
     },
     {
       "name": "generate_with_property",
-      "description": "Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "object",
-            "description": "Property spec: {field, type, constraints: {min, max, ...}, count, seed}"
-          }
-        },
-        "required": ["spec"]
-      }
+      "description": "Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data."
     },
     {
       "name": "generate_boundary_cases",
-      "description": "Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "object",
-            "description": "Boundary spec: {field, type, constraints: {min, max, ...}}"
-          }
-        },
-        "required": ["spec"]
-      }
+      "description": "Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery."
     },
     {
       "name": "generate_random",
-      "description": "Generate constrained random test data for multiple fields with optional seed for reproducibility.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "object",
-            "description": "Random spec: {fields: [{field, type, constraints}], count, seed}"
-          }
-        },
-        "required": ["spec"]
-      }
+      "description": "Generate constrained random test data for multiple fields with optional seed for reproducibility."
     }
   ],
-  "keywords": ["testing", "test-automation", "mcp", "opencode", "bva", "boundary-value-analysis", "equivalence-partitioning", "pairwise-testing", "test-heuristics"],
+  "keywords": [
+    "testing",
+    "test-automation",
+    "mcp",
+    "opencode",
+    "bva",
+    "boundary-value-analysis",
+    "equivalence-partitioning",
+    "pairwise-testing",
+    "test-heuristics"
+  ],
   "license": "MIT",
   "compatibility": {
-    "platforms": ["darwin", "linux", "win32"],
+    "platforms": [
+      "darwin",
+      "linux",
+      "win32"
+    ],
     "runtimes": {
       "python": ">=3.11"
     }

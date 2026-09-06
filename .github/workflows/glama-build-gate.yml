@@ -1,0 +1,44 @@
+name: glama-build-gate
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["docs/**", "README.md"]
+  pull_request:
+    paths-ignore: ["docs/**", "README.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run unit tests
+        run: |
+          pip install "mcp>=1.29.0,<2" pytest
+          python -m pytest tests/ -q
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Build Docker image (Glama fires a plain build)
+        run: docker build -t test-assistent-mcp-server:ci .
+
+      - name: MCP smoke test inside image (tools/list via stdio)
+        run: |
+          docker run --rm \
+            -v "$PWD/scripts/mcp-smoke.py:/app/scripts/mcp-smoke.py:ro" \
+            --entrypoint python \
+            test-assistent-mcp-server:ci \
+            scripts/mcp-smoke.py 8
