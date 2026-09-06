@@ -2,9 +2,9 @@
   "manifest_version": "0.4",
   "name": "test-assistent-mcp-server",
   "display_name": "Test Assistant MCP Server",
-  "version": "0.1.0",
-  "description": "MCP server for OpenCode that exposes classic test techniques (BVA, EP, pairwise, decision table, state transition, use case, error guessing) and test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours) as tools.",
-  "long_description": "A knowledge-based MCP server for OpenCode agents that provides:\n\n- **catalog_techniques**: list all classic test techniques\n- **catalog_heuristics**: list all test heuristics\n- **generate_test_cases**: generate concrete testcases for BVA, EP, and pairwise testing\n- **advise_technique**: keyword-based recommendation of techniques and heuristics\n- **checklist_for**: produce a test checklist for a given context\n\nThe knowledge base (7 techniques + 6 heuristics) is bundled as JSON and loaded at startup.",
+  "version": "0.2.0",
+  "description": "MCP server for OpenCode that exposes classic test techniques (BVA, EP, pairwise, decision table, state transition, use case, error guessing), test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours), and property-based test data generation (boundary, random, seed) as 8 tools.",
+  "long_description": "A knowledge-based MCP server for OpenCode agents that provides:\n\n- **catalog_techniques**: list all classic test techniques\n- **catalog_heuristics**: list all test heuristics\n- **generate_test_cases**: generate concrete testcases for BVA, EP, and pairwise testing\n- **generate_with_property**: property-based test data with boundary discovery and seed reproducibility\n- **generate_boundary_cases**: automatic BVA for int, float, string, date types\n- **generate_random**: constrained random data generation with optional seed\n- **advise_technique**: keyword-based recommendation of techniques and heuristics\n- **checklist_for**: produce a test checklist for a given context\n\nThe knowledge base (7 techniques + 6 heuristics) is bundled as JSON and loaded at startup.",
   "author": {
     "name": "Cerios TechLab",
     "url": "https://github.com/Cerios-TechLab"
@@ -82,6 +82,62 @@
           }
         },
         "required": ["context"]
+      }
+    },
+    {
+      "name": "checklist_for",
+      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "string",
+            "description": "The testing context, e.g. 'regression', 'exploratory testing', 'no specification'"
+          }
+        },
+        "required": ["context"]
+      }
+    },
+    {
+      "name": "generate_with_property",
+      "description": "Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "object",
+            "description": "Property spec: {field, type, constraints: {min, max, ...}, count, seed}"
+          }
+        },
+        "required": ["spec"]
+      }
+    },
+    {
+      "name": "generate_boundary_cases",
+      "description": "Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "object",
+            "description": "Boundary spec: {field, type, constraints: {min, max, ...}}"
+          }
+        },
+        "required": ["spec"]
+      }
+    },
+    {
+      "name": "generate_random",
+      "description": "Generate constrained random test data for multiple fields with optional seed for reproducibility.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "spec": {
+            "type": "object",
+            "description": "Random spec: {fields: [{field, type, constraints}], count, seed}"
+          }
+        },
+        "required": ["spec"]
       }
     }
   ],
