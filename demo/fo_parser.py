@@ -108,23 +108,52 @@ def parse_fo(text: str) -> dict[str, Any]:
             }
         )
 
-    # Qualitative business rules: "geen ... als ..." / "niet ... als ..."
+    # Qualitative business rules: "geen ... als ...", "niet ... als ...",
+    # "alleen ... als ..." and "als je een ... bent".
     for line in text.splitlines():
         ls = line.strip("•-\t ").strip()
         if not ls:
             continue
-        if re.search(r"\b(geen|niet)\b.*\bals\b", ls, re.I) or re.search(
+        if re.search(r"[<>]=?\s*\d+", ls):
+            continue  # already captured as a numeric rule
+        if re.search(r"\b(geen|niet|alleen)\b.*\bals\b", ls, re.I) or re.search(
             r"als je een .+ bent", ls, re.I
         ):
-            if not re.search(r"[<>]=?\s*\d+", ls):  # skip already-captured numeric rules
-                rules.append(
-                    {
-                        "condition": ls,
-                        "expected": "rejected",
-                        "message": ls,
-                        "qualitative": True,
-                    }
-                )
+            rules.append(
+                {
+                    "condition": ls,
+                    "expected": "rejected",
+                    "message": ls,
+                    "qualitative": True,
+                }
+            )
+
+    # General requirement in the goal sentence, e.g. "ze een man zijn".
+    # The negative test ("De bezoeker is geen <noun>") is what we want to assert.
+    for m in re.finditer(r"\been\s+(\w+)\s+(zijn|bent|is)\b", text, re.I):
+        noun = m.group(1).lower()
+        if noun in {"geheel", "heel", "geheel"}:
+            continue  # "een geheel getal" is not a requirement
+        rules.append(
+            {
+                "condition": f"een {noun}",
+                "expected": "rejected",
+                "message": f"De bezoeker is geen {noun}",
+                "qualitative": True,
+            }
+        )
+
+    # De-duplicate rules by message (fallback condition) so the same rule is not
+    # captured twice (e.g. once as a bullet and once via the general detector).
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for r in rules:
+        key = (r.get("message") or r["condition"]).strip().lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(r)
+    rules = deduped
 
     specs["fields"].append(
         {
