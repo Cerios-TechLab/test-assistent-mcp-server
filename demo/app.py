@@ -22,8 +22,7 @@ zodat alleen bezoekers van 18 jaar of ouder een account kunnen aanmaken.
 •  Bij leeftijd < 18 wordt registratie geweigerd met de melding
       'Je moet 18 jaar of ouder zijn.'
 •  Bij leeftijd >= 18 wordt het account aangemaakt.
-•  Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout.
-- Geen account aanmaken als je een alcoholist bent"""
+•  Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout."""
 
 TECHNIQUES = [
     "Auto (advise_technique)",
