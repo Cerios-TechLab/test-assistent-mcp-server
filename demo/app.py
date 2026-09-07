@@ -1,21 +1,17 @@
-"""Streamlit demo: FO -> BDD scenarios OR Exploratory Test Charter, by consulting
-the REAL Test Assistent MCP server (advise_technique, generate_test_cases,
-catalog_heuristics)."""
+"""Streamlit demo: stuur een stuk FO naar OpenCode (big-pickle), die de Test Assistent
+MCP-server (testassist) raadpleegt, en toon het antwoord terug in de GUI."""
 
 from __future__ import annotations
+
+import re
+import subprocess
 
 import streamlit as st
 
 try:
-    from demo.fo_parser import parse_fo
-    from demo.bdd_builder import format_bdd
-    from demo.charter_builder import build_charter
-    from demo.mcp_client import consult_server
+    from demo.opencode_client import ask, DEFAULT_MODEL
 except ImportError:
-    from fo_parser import parse_fo
-    from bdd_builder import format_bdd
-    from charter_builder import build_charter
-    from mcp_client import consult_server
+    from opencode_client import ask, DEFAULT_MODEL
 
 DEFAULT_FO = """FO-FR014 — Leeftijdscontrole bij registratie
 
@@ -27,7 +23,6 @@ zodat alleen bezoekers van 18 jaar of ouder een account kunnen aanmaken.
       'Je moet 18 jaar of ouder zijn.'
 •  Bij leeftijd >= 18 wordt het account aangemaakt.
 •  Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout.
-- Je mag niet jonger zijn dan 0 jaar
 - Geen account aanmaken als je een alcoholist bent"""
 
 TECHNIQUES = [
@@ -43,25 +38,69 @@ TECHNIQUES = [
     "Test Tours",
 ]
 
+OUTPUT_BDD = "BDD-scenario's (Gherkin)"
+OUTPUT_CHARTER = "Exploratory Test Charter"
+
+
+def build_prompt(fo: str, technique: str, output: str) -> str:
+    if output == OUTPUT_BDD:
+        return (
+            "You have access to the Test Assistent MCP server (tools are named "
+            "testassist_advise_technique, testassist_generate_test_cases, "
+            "testassist_catalog_heuristics, etc.). Use them to analyze the "
+            "Functionele Omschrijving (FO) below and produce Gherkin BDD scenarios "
+            "(Functionaliteit / Scenario / Gegeven / Als / Dan / En), in Dutch.\n\n"
+            "Required tool calls:\n"
+            "1. testassist_advise_technique with the FO as the description.\n"
+            "2. testassist_generate_test_cases with technique 'Boundary Value "
+            "Analysis' and inputs {field, min, max} derived from the FO.\n"
+            f"(Selected technique context: {technique}.)\n\n"
+            "Output: ONLY the final Gherkin inside a single ```gherkin code block. "
+            "No commentary, no headings outside the code block.\n\n"
+            f"FO:\n{fo}"
+        )
+    return (
+        "You have access to the Test Assistent MCP server (tools named "
+        "testassist_catalog_heuristics, testassist_advise_technique, etc.). "
+        "Use them to produce an Exploratory Test Charter (RST: SFDPOT "
+        "decomposition × FEW HICCUPPS oracles) for the FO below, in Dutch.\n\n"
+        f"Selected heuristic: {technique}.\n\n"
+        "Required tool calls:\n"
+        "1. testassist_catalog_heuristics (no arguments) for reference.\n"
+        "2. testassist_advise_technique with the FO as the description.\n\n"
+        "Output: the charter as Markdown. Do NOT wrap it in a code block. "
+        "Do NOT add preamble or explanation outside the charter.\n\n"
+        f"FO:\n{fo}"
+    )
+
+
+def render_answer(text: str, output: str):
+    """Display the model's answer; prefer a Gherkin code block when present."""
+    if output == OUTPUT_BDD:
+        m = re.search(r"```(?:gherkin)?\s*([\s\S]+?)```", text)
+        if m:
+            body = m.group(1).strip("\n")
+            st.code(body, language="gherkin")
+            st.download_button("Download BDD", body, file_name="bdd-scenarios.txt")
+            return
+    st.markdown(text)
+    ext = "bdd.txt" if output == OUTPUT_BDD else "test-charter.md"
+    st.download_button("Download antwoord", text, file_name=ext)
+
 
 def main() -> None:
-    st.set_page_config(page_title="FO → BDD / Charter demo", layout="wide")
+    st.set_page_config(page_title="FO → BDD / Charter (via OpenCode)", layout="wide")
     st.title("FO → BDD scenario's of Exploratory Test Charter")
     st.caption(
-        "Genereert BDD (Gherkin) of een Exploratory Test Charter (RST) uit een "
-        "Functionele Omschrijving, door de échte Test Assistent MCP-server te "
-        "raadplegen (advise_technique, generate_test_cases, catalog_heuristics)."
+        "Stuurt de Functionele Omschrijving naar OpenCode (model "
+        f"`{DEFAULT_MODEL}`), die de Test Assistent MCP-server raadpleegt. "
+        "Het antwoord wordt hier teruggegeven."
     )
 
     col1, col2 = st.columns(2)
-    technique = col1.selectbox(
-        "Techniek / heuristiek", TECHNIQUES, index=0,
-        help="Voor BDD wordt automatisch BVA gebruikt; kies 'Charter' voor de overige.",
-    )
+    technique = col1.selectbox("Techniek / heuristiek", TECHNIQUES, index=0)
     output = col2.radio(
-        "Output-type",
-        ["BDD-scenario's (Gherkin)", "Exploratory Test Charter"],
-        horizontal=True,
+        "Output-type", [OUTPUT_BDD, OUTPUT_CHARTER], horizontal=True,
     )
 
     if "fo_text" not in st.session_state:
@@ -73,68 +112,49 @@ def main() -> None:
     fo = st.text_area(
         "Functionele Omschrijving (FO)",
         value=st.session_state.fo_text,
-        height=300,
+        height=280,
         key="fo",
     )
 
-    label = "Genereer BDD-scenario's" if output.startswith("BDD") else "Genereer Test Charter"
-    if st.button(label + " (via MCP-server)", type="primary"):
-        specs = parse_fo(fo)
-        if not specs["fields"]:
-            st.error(
-                "Geen veldspecificaties herkend in de FO. Voeg bijv. een bereik "
-                "toe (bijv. 'tussen 0 en 120') of vul een veld handmatig in."
-            )
+    label = "Genereer BDD-scenario's" if output == OUTPUT_BDD else "Genereer Test Charter"
+    if st.button(label + " via OpenCode", type="primary"):
+        if not fo.strip():
+            st.error("Vul eerst een FO in.")
             return
-
-        with st.spinner("MCP-server wordt geraadpleegd…"):
+        prompt = build_prompt(fo, technique, output)
+        with st.spinner(
+            f"OpenCode ({DEFAULT_MODEL}) raadpleegt de MCP-server…"
+        ):
             try:
-                advice, bva_raw, heuristics, used = consult_server(fo, specs)
-            except Exception as exc:
-                st.error(f"Kon de MCP-server niet raadplegen: {exc}")
+                res = ask(prompt, model=DEFAULT_MODEL, cwd="/root",
+                          title="fo-bdd-demo", timeout=600)
+            except subprocess.TimeoutExpired:
+                st.error("OpenCode duurde te lang (timeout).")
+                return
+            except FileNotFoundError as exc:
+                st.error(f"OpenCode binary niet gevonden: {exc}")
+                return
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"OpenCode-call mislukt: {exc}")
                 return
 
-        st.subheader("Geëxtraheerde veld-specificaties")
-        st.json(specs, expanded=False)
+        st.subheader("Antwoord van OpenCode")
+        render_answer(res["text"], output)
 
-        if advice:
-            st.subheader("Advies van de MCP-server (advise_technique)")
-            st.json(advice, expanded=False)
-
-        if output.startswith("BDD"):
-            if technique not in ("Auto (advise_technique)", "Boundary Value Analysis"):
-                st.warning(
-                    "BDD wordt automatisch gegenereerd op basis van Boundary Value "
-                    "Analysis. Voor andere technieken kies 'Exploratory Test Charter'."
-                )
-            gherkin = format_bdd(specs, bva_raw)
-            st.subheader("BDD-scenario's (Gherkin)")
-            st.code(gherkin, language="gherkin")
-            st.download_button(
-                "Download BDD (.txt)",
-                gherkin,
-                file_name="bdd-scenarios.txt",
-                mime="text/plain",
-            )
-        else:
-            charter = build_charter(
-                fo,
-                specs,
-                (heuristics or {}).get("heuristics"),
-                used,
-                technique=technique,
-            )
-            st.subheader(f"Exploratory Test Charter — {technique}")
-            st.markdown(charter)
-            st.download_button(
-                "Download Charter (.md)",
-                charter,
-                file_name="test-charter.md",
-                mime="text/markdown",
-            )
-
+        used = res["tools"]
         if used:
-            st.info("Geraadpleegde MCP-tools: " + ", ".join(used))
+            st.info("Geraadpleegde MCP-tools (door OpenCode): " + ", ".join(used))
+        else:
+            st.warning(
+                "OpenCode gaf geen tool-aanroepen terug — het model heeft de "
+                "MCP-server mogelijk niet gebruikt. Probeer de prompt te "
+                "verduidelijken of de timebox te verhogen."
+            )
+        if res.get("session"):
+            st.caption(f"OpenCode-sessie: {res['session']}")
+        if res["returncode"] != 0:
+            with st.expander("OpenCode stderr"):
+                st.code(res["stderr_tail"])
 
 
 if __name__ == "__main__":

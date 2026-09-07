@@ -1,4 +1,4 @@
-"""Tests for the FO -> BDD demo pipeline (parser + real MCP-server consultation)."""
+"""Tests for the FO demo (parser heuristics + OpenCode client smoke)."""
 
 from __future__ import annotations
 
@@ -18,44 +18,21 @@ def test_parse_captures_extra_constraints():
     f = specs["fields"][0]
     assert f["name"] == "leeftijd"
     assert f["min"] == 0 and f["max"] == 120
-    # the "< 18" reject rule
     assert any(r["expected"] == "rejected" and not r.get("qualitative") for r in f["rules"])
-    # the qualitative alcoholist rule is captured from the extra FO line
     assert any(r.get("qualitative") for r in f["rules"])
-    # "niet jonger dan 0" reinforced the min (still 0)
-    assert f["min"] == 0
 
 
-def test_bdd_uses_mcp_server_output():
-    from demo.fo_parser import parse_fo
-    from demo.bdd_builder import format_bdd
-    from demo.mcp_client import consult_server
+def test_opencode_client_smoke():
+    """Requires /root/.opencode/bin/opencode and network to the model provider."""
+    import shutil
 
-    specs = parse_fo(FO)
-    advice, bva_raw, heuristics, used = consult_server(FO, specs)
-    assert "generate_test_cases" in used
-    assert "catalog_heuristics" in used
-    assert bva_raw and bva_raw.get("testcases")
-    assert heuristics and heuristics.get("heuristics")
+    from demo.opencode_client import ask
 
-    gherkin = format_bdd(specs, bva_raw)
-    assert "Functionaliteit:" in gherkin
-    assert "Gegeven" in gherkin and "Als" in gherkin and "Dan" in gherkin
-    for val in ("17", "18", "0", "120", "121"):
-        assert val in gherkin, f"expected value {val} in scenarios"
-    assert "alcoholist" in gherkin
-
-
-def test_charter_generated():
-    from demo.fo_parser import parse_fo
-    from demo.charter_builder import build_charter
-    from demo.mcp_client import consult_server
-
-    specs = parse_fo(FO)
-    _, _, heuristics, used = consult_server(FO, specs)
-    md = build_charter(FO, specs, heuristics.get("heuristics"), used, technique="SFDPOT")
-    assert "Exploratory Test Charter" in md
-    assert "SFDPOT" in md
-    assert "FEW HICCUPPS" in md
-    assert "BVA-grenswaarden" in md
-    assert "alcoholist" in md or "kwalitatieve" in md.lower()
+    if not shutil.which("/root/.opencode/bin/opencode") and not __import__("os").path.exists(
+        "/root/.opencode/bin/opencode"
+    ):
+        return  # skip silently if opencode is not installed
+    r = ask("Reply with exactly: PONG", model="opencode/big-pickle",
+            cwd="/root", title="fo-bdd-test", timeout=180)
+    assert "PONG" in r["text"], f"unexpected text: {r['text']!r}"
+    assert isinstance(r["tools"], list)
