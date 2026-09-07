@@ -62,7 +62,15 @@ async def _run(fo: str, specs: dict[str, Any]):
                 bva_raw = _payload(bva)
                 used.append("generate_test_cases")
 
-    return advice, bva_raw, used
+            heuristics = None
+            try:
+                h = await s.call_tool("catalog_heuristics", {})
+                heuristics = _payload(h)
+                used.append("catalog_heuristics")
+            except Exception:
+                heuristics = None
+
+    return advice, bva_raw, heuristics, used
 
 
 def consult_server(fo: str, specs: dict[str, Any]):
@@ -83,7 +91,8 @@ if __name__ == "__main__":
         "Geen account aanmaken als je een alcoholist bent."
     )
     sp = parse_fo(sample)
-    advice, bva, used = consult_server(sample, sp)
+    advice, bva, heuristics, used = consult_server(sample, sp)
     print("used:", used)
     print("advice:", json.dumps(advice, ensure_ascii=False)[:300])
     print("bva:", json.dumps(bva, ensure_ascii=False)[:400])
+    print("heuristics count:", len((heuristics or {}).get("heuristics", [])))

@@ -53,7 +53,9 @@ def format_bdd(specs: dict[str, Any], bva_raw: dict[str, Any] | None) -> str:
         # Qualitative business rules (e.g. "geen account als je een alcoholist bent").
         for r in f.get("rules", []):
             if r.get("qualitative"):
-                out.append(f"  Scenario: {r['message'][:55]}")
+                words = r["message"].split()
+                title = " ".join(words[:8]) + ("…" if len(words) > 8 else "")
+                out.append(f"  Scenario: {title}")
                 out.append(f"    Gegeven {r['message']}")
                 out.append(f"    Als de registratie wordt verzonden")
                 out.append(f"    Dan wordt er geen account aangemaakt")

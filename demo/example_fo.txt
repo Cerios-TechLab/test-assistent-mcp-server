@@ -1,0 +1,12 @@
+FO-BS-007 — Bestelhoeveelheid bij een webshop
+
+Als klant wil ik een product bestellen, zodat ik het thuisbezorgd krijg.
+
+•  Het aantal-veld accepteert een geheel getal tussen 1 en 50.
+•  Bij aantal < 1 wordt de bestelling geweigerd met de melding
+      'Kies ten minste 1 product.'
+•  Bij aantal >= 50 geldt het maximale orderlimiet en wordt er geen
+      extra voorraad gereserveerd.
+•  Een niet-numerieke of ontbrekende hoeveelheid geeft een validatiefout.
+- Je mag niet meer dan 50 stuks per bestelling hebben
+- Geen bestelling plaatsen als je een niet-bestaand product kiest

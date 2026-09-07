@@ -28,18 +28,23 @@ def parse_fo(text: str) -> dict[str, Any]:
     if m:
         specs["feature"] = m.group(1).capitalize()
 
-    # Field name: word directly before "veld", else "het <woord> accepteert".
+    # Field name: word directly before "veld" (with or without hyphen),
+    # else "het <woord> accepteert".
     field = None
     fm = re.search(r"(\w+?)veld", text, re.I)
     if fm:
         field = fm.group(1)
     else:
-        fm = re.search(r"het\s+(\w+)\s+accepteert", text, re.I)
+        fm = re.search(r"(\w+-veld)", text, re.I)
         if fm:
             field = fm.group(1)
+        else:
+            fm = re.search(r"het\s+([\w-]+)\s+accepteert", text, re.I)
+            if fm:
+                field = fm.group(1)
     if not field:
         field = "veld"
-    field = field.rstrip("s")  # "leeftijds" -> "leeftijd"
+    field = field.lower().replace("-veld", "").rstrip("s")  # "aantal-veld" -> "aantal"
 
     ftype = _detect_type(text)
 
@@ -65,17 +70,24 @@ def parse_fo(text: str) -> dict[str, Any]:
         fmin = (n + 1) if fmin is None else max(fmin, n + 1)
 
     # Rules: "< N" / ">= N" with surrounding reject/accept wording + quoted message.
+    # The numeric comparison is attached as a rule for the (single) field regardless
+    # of the exact preceding word. We inspect a SHORT window right after the
+    # condition for explicit accept/reject verbs (so a later line's wording like
+    # "niet-numerieke" does not misclassify this rule), but a LARGER window for
+    # the quoted message (which may extend past the verb window).
     rules: list[dict[str, Any]] = []
     for rm in re.finditer(r"(\w+)\s*(<|>=|<=|>|==)\s*(\d+)", text):
         field_token, op, thr = rm.group(1), rm.group(2), int(rm.group(3))
-        if field_token.lower() not in (field, "leeftijd", "age"):
-            continue
-        seg = text[max(0, rm.start() - 50): rm.end() + 50]
-        rejected = op == "<" or bool(
-            re.search(r"geweigerd|afgewezen|niet|fout|ongeld", seg, re.I)
-        )
+        verb_win = text[rm.end(): rm.end() + 35]
+        msg_win = text[rm.end(): rm.end() + 130]
+        if re.search(r"geweigerd|afgewezen", verb_win, re.I):
+            rejected = True
+        elif re.search(r"aangemaakt|akkoord|toegestaan|geaccepteerd|geld", verb_win, re.I):
+            rejected = False
+        else:
+            rejected = op == "<"
         msg = None
-        qm = re.search(r"['\"]([^'\"]+)['\"]", seg)
+        qm = re.search(r"['\"]([^'\"]+)['\"]", msg_win)
         if qm:
             msg = qm.group(1)
         rules.append(

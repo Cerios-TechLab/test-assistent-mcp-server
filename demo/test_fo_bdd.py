@@ -32,14 +32,30 @@ def test_bdd_uses_mcp_server_output():
     from demo.mcp_client import consult_server
 
     specs = parse_fo(FO)
-    advice, bva_raw, used = consult_server(FO, specs)
+    advice, bva_raw, heuristics, used = consult_server(FO, specs)
     assert "generate_test_cases" in used
+    assert "catalog_heuristics" in used
     assert bva_raw and bva_raw.get("testcases")
+    assert heuristics and heuristics.get("heuristics")
 
     gherkin = format_bdd(specs, bva_raw)
     assert "Functionaliteit:" in gherkin
     assert "Gegeven" in gherkin and "Als" in gherkin and "Dan" in gherkin
     for val in ("17", "18", "0", "120", "121"):
         assert val in gherkin, f"expected value {val} in scenarios"
-    # the extra qualitative FO line produced its own scenario
     assert "alcoholist" in gherkin
+
+
+def test_charter_generated():
+    from demo.fo_parser import parse_fo
+    from demo.charter_builder import build_charter
+    from demo.mcp_client import consult_server
+
+    specs = parse_fo(FO)
+    _, _, heuristics, used = consult_server(FO, specs)
+    md = build_charter(FO, specs, heuristics.get("heuristics"), used, technique="SFDPOT")
+    assert "Exploratory Test Charter" in md
+    assert "SFDPOT" in md
+    assert "FEW HICCUPPS" in md
+    assert "BVA-grenswaarden" in md
+    assert "alcoholist" in md or "kwalitatieve" in md.lower()
