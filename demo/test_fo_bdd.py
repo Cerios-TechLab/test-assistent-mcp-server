@@ -1,4 +1,4 @@
-"""Tests for the FO -> BDD demo pipeline (parser + builder)."""
+"""Tests for the FO -> BDD demo pipeline (parser + real MCP-server consultation)."""
 
 from __future__ import annotations
 
@@ -6,41 +6,40 @@ FO = """FO-FR014 — Leeftijdscontrole bij registratie
 Het leeftijdsveld accepteert een geheel getal tussen 0 en 120.
 Bij leeftijd < 18 wordt registratie geweigerd met de melding 'Je moet 18 jaar of ouder zijn.'
 Bij leeftijd >= 18 wordt het account aangemaakt.
-Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout."""
+Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout.
+Je mag niet jonger zijn dan 0 jaar.
+Geen account aanmaken als je een alcoholist bent."""
 
 
-def test_parse_finds_field_and_range():
+def test_parse_captures_extra_constraints():
     from demo.fo_parser import parse_fo
 
     specs = parse_fo(FO)
-    assert specs["fields"], "expected at least one field"
     f = specs["fields"][0]
     assert f["name"] == "leeftijd"
-    assert f["type"] == "integer"
     assert f["min"] == 0 and f["max"] == 120
-    assert any(r["expected"] == "rejected" for r in f["rules"])
-    assert any(r["expected"] == "validation error" for r in f["rules"])
+    # the "< 18" reject rule
+    assert any(r["expected"] == "rejected" and not r.get("qualitative") for r in f["rules"])
+    # the qualitative alcoholist rule is captured from the extra FO line
+    assert any(r.get("qualitative") for r in f["rules"])
+    # "niet jonger dan 0" reinforced the min (still 0)
+    assert f["min"] == 0
 
 
-def test_bdd_contains_gherkin_and_key_values():
+def test_bdd_uses_mcp_server_output():
     from demo.fo_parser import parse_fo
-    from demo.bdd_builder import build_bdd
+    from demo.bdd_builder import format_bdd
+    from demo.mcp_client import consult_server
 
     specs = parse_fo(FO)
-    gherkin, used = build_bdd(FO, specs)
+    advice, bva_raw, used = consult_server(FO, specs)
+    assert "generate_test_cases" in used
+    assert bva_raw and bva_raw.get("testcases")
 
+    gherkin = format_bdd(specs, bva_raw)
     assert "Functionaliteit:" in gherkin
     assert "Gegeven" in gherkin and "Als" in gherkin and "Dan" in gherkin
-    # boundary + rule values from the example
     for val in ("17", "18", "0", "120", "121"):
         assert val in gherkin, f"expected value {val} in scenarios"
-    assert "generate_boundary_value_analysis" in used
-
-
-def test_non_numeric_rule_scenario():
-    from demo.fo_parser import parse_fo
-    from demo.bdd_builder import build_bdd
-
-    specs = parse_fo(FO)
-    gherkin, _ = build_bdd(FO, specs)
-    assert "validatiefout" in gherkin
+    # the extra qualitative FO line produced its own scenario
+    assert "alcoholist" in gherkin

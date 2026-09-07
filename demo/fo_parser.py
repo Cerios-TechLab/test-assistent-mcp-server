@@ -2,6 +2,8 @@
 
 Dutch-keyword heuristics only. Returns a spec dict the BDD builder can consume.
 This is intentionally simple — enough for the live demo, not a full NLP parser.
+It now also picks up extra constraint lines such as "niet jonger dan N",
+"niet ouder dan N" and qualitative business rules ("geen ... als ...").
 """
 
 from __future__ import annotations
@@ -48,6 +50,20 @@ def parse_fo(text: str) -> dict[str, Any]:
     fmin = int(rng.group(1)) if rng else None
     fmax = int(rng.group(2)) if rng else None
 
+    # Extra constraints expressed without an operator.
+    for mm in re.finditer(r"niet\s+jonger\s+dan\s+(\d+)", text, re.I):
+        n = int(mm.group(1))
+        fmin = n if fmin is None else max(fmin, n)
+    for mm in re.finditer(r"niet\s+ouder\s+dan\s+(\d+)", text, re.I):
+        n = int(mm.group(1))
+        fmax = n if fmax is None else min(fmax, n)
+    for mm in re.finditer(r"jonger\s+dan\s+(\d+)", text, re.I):
+        n = int(mm.group(1))
+        fmax = (n - 1) if fmax is None else min(fmax, n - 1)
+    for mm in re.finditer(r"ouder\s+dan\s+(\d+)", text, re.I):
+        n = int(mm.group(1))
+        fmin = (n + 1) if fmin is None else max(fmin, n + 1)
+
     # Rules: "< N" / ">= N" with surrounding reject/accept wording + quoted message.
     rules: list[dict[str, Any]] = []
     for rm in re.finditer(r"(\w+)\s*(<|>=|<=|>|==)\s*(\d+)", text):
@@ -80,6 +96,24 @@ def parse_fo(text: str) -> dict[str, Any]:
             }
         )
 
+    # Qualitative business rules: "geen ... als ..." / "niet ... als ..."
+    for line in text.splitlines():
+        ls = line.strip("•-\t ").strip()
+        if not ls:
+            continue
+        if re.search(r"\b(geen|niet)\b.*\bals\b", ls, re.I) or re.search(
+            r"als je een .+ bent", ls, re.I
+        ):
+            if not re.search(r"[<>]=?\s*\d+", ls):  # skip already-captured numeric rules
+                rules.append(
+                    {
+                        "condition": ls,
+                        "expected": "rejected",
+                        "message": ls,
+                        "qualitative": True,
+                    }
+                )
+
     specs["fields"].append(
         {
             "name": field,
@@ -101,6 +135,8 @@ if __name__ == "__main__":
         "Bij leeftijd < 18 wordt registratie geweigerd met de melding "
         "'Je moet 18 jaar of ouder zijn.'\n"
         "Bij leeftijd >= 18 wordt het account aangemaakt.\n"
-        "Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout."
+        "Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout.\n"
+        "Je mag niet jonger zijn dan 0 jaar.\n"
+        "Geen account aanmaken als je een alcoholist bent."
     )
     print(json.dumps(parse_fo(sample), indent=2, ensure_ascii=False))

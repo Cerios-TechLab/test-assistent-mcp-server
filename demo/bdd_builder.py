@@ -1,18 +1,14 @@
-"""BDD builder: turn parsed FO specs into Gherkin, reusing MCP-server logic."""
+"""BDD builder: turn parsed FO specs + SERVER-returned BVA cases into Gherkin.
+
+The boundary VALUES come from the MCP server (generate_test_cases / BVA). The
+business-rule classification (e.g. age < 18 rejected) comes from the parsed FO
+rules, so the demo shows both the server output and the FO-driven logic.
+"""
 
 from __future__ import annotations
 
 import re
-import sys
-from pathlib import Path
 from typing import Any
-
-# Make the repo root importable so `server.*` resolves regardless of cwd.
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-from server.generators import generate_boundary_value_analysis  # noqa: E402
 
 
 def _classify(value: int, f: dict[str, Any]):
@@ -21,7 +17,7 @@ def _classify(value: int, f: dict[str, Any]):
     if f.get("min") is not None and (value < f["min"] or value > f["max"]):
         reasons.append("bereik")
     for r in f.get("rules", []):
-        if r["expected"] == "rejected":
+        if r.get("expected") == "rejected" and not r.get("qualitative"):
             m = re.match(r"(<|>=|<=|>)\s*(\d+)", r["condition"])
             if m and (m.group(1) in ("<", ">=") and value < int(m.group(2))):
                 reasons.append(f"regel:{r.get('message', '')}")
@@ -31,6 +27,8 @@ def _classify(value: int, f: dict[str, Any]):
 def _rule_thresholds(f: dict[str, Any]) -> set[int]:
     vals: set[int] = set()
     for r in f.get("rules", []):
+        if r.get("qualitative"):
+            continue
         m = re.match(r"(<|>=|<=|>)\s*(\d+)", r["condition"])
         if m and m.group(1) in ("<", ">="):
             thr = int(m.group(2))
@@ -39,9 +37,7 @@ def _rule_thresholds(f: dict[str, Any]) -> set[int]:
     return vals
 
 
-def build_bdd(text: str, specs: dict[str, Any]):
-    """Return (gherkin_str, used_tools_list)."""
-    used: list[str] = []
+def format_bdd(specs: dict[str, Any], bva_raw: dict[str, Any] | None) -> str:
     out: list[str] = []
     feature = specs.get("feature") or "Registratie"
     out.append(f"Functionaliteit: {feature}")
@@ -49,14 +45,19 @@ def build_bdd(text: str, specs: dict[str, Any]):
 
     for f in specs["fields"]:
         values: set[int] = set()
-        if f.get("min") is not None and f.get("max") is not None:
-            cases = generate_boundary_value_analysis(
-                {"field": f["name"], "min": f["min"], "max": f["max"]}
-            )
-            used.append("generate_boundary_value_analysis")
-            for c in cases:
+        if bva_raw and bva_raw.get("testcases"):
+            for c in bva_raw["testcases"]:
                 values.add(c["input"][f["name"]])
         values |= _rule_thresholds(f)
+
+        # Qualitative business rules (e.g. "geen account als je een alcoholist bent").
+        for r in f.get("rules", []):
+            if r.get("qualitative"):
+                out.append(f"  Scenario: {r['message'][:55]}")
+                out.append(f"    Gegeven {r['message']}")
+                out.append(f"    Als de registratie wordt verzonden")
+                out.append(f"    Dan wordt er geen account aangemaakt")
+                out.append("")
 
         # Non-numeric / missing -> validation error scenario.
         for r in f.get("rules", []):
@@ -88,11 +89,13 @@ def build_bdd(text: str, specs: dict[str, Any]):
                 out.append(f"    En wordt er geen account aangemaakt")
             out.append("")
 
-    gherkin = "\n".join(out).rstrip() + "\n"
-    return gherkin, used
+    return "\n".join(out).rstrip() + "\n"
 
 
 if __name__ == "__main__":
+    import json
+
+    from demo.mcp_client import consult_server
     from demo.fo_parser import parse_fo
 
     sample = (
@@ -101,8 +104,11 @@ if __name__ == "__main__":
         "Bij leeftijd < 18 wordt registratie geweigerd met de melding "
         "'Je moet 18 jaar of ouder zijn.'\n"
         "Bij leeftijd >= 18 wordt het account aangemaakt.\n"
-        "Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout."
+        "Een niet-numerieke of ontbrekende leeftijd geeft een validatiefout.\n"
+        "Je mag niet jonger zijn dan 0 jaar.\n"
+        "Geen account aanmaken als je een alcoholist bent."
     )
-    g, used = build_bdd(sample, parse_fo(sample))
-    print(g)
+    sp = parse_fo(sample)
+    advice, bva, used = consult_server(sample, sp)
+    print(format_bdd(sp, bva))
     print("used:", used)
