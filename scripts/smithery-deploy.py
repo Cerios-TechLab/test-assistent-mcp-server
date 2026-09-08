@@ -1,9 +1,50 @@
 """Deploy the MCPB bundle to Smithery with a complete serverCard.
 
-Workaround: the MCPB manifest schema rejects inputSchema on tools, but the
-Smithery deploy API requires every tool in the serverCard payload to carry one.
-This script packs the bundle (via @anthropic-ai/mcpb) and uploads it through the
-REST API with the tool schemas taken from server-card.json.
+==========================================================
+MCPB bundle method — what works for publishing to Smithery
+==========================================================
+
+1) Pack locally with the official MCPB CLI:
+       npx -y @anthropic-ai/mcpb pack <mcpb-dir> dist/server.mcpb
+
+2) Manifest MUST be MCPB schema v0.4 and MUST NOT carry `inputSchema` or
+   `input_schema` on tools — both are rejected as "Unrecognized key(s) in
+   object" by the local `mcpb pack` validator. Tool input schemas are
+   carried via the deploy payload's serverCard instead (see step 3).
+
+3) Deploy via the Smithery REST API:
+       PUT  /servers/{qualifiedName}             # create stub if 404
+       PUT  /servers/{qualifiedName}/releases   # multipart upload
+
+   Multipart parts:
+     - payload (JSON):
+         {
+           "type": "stdio",
+           "runtime": "python",
+           "serverCard": {
+             "serverInfo": { "name": <manifest.name>, "version": <manifest.version> },
+             "description": <manifest.description>,
+             "tools": [ {"name", "description", "inputSchema"} ... ],   # from server-card.json
+             "resources": [],
+             "prompts": []
+           }
+         }
+     - bundle (file): the packed dist/server.mcpb
+
+   Returns 202 + { deploymentId, status: "SUCCESS", mcpUrl:
+   https://{name}--{ns}.run.tools }.
+
+4) API requires an Authorization: Bearer <SMITHERY_API_KEY> header. On
+   this box the key lives in /root/backups/.env (export it per-shell,
+   e.g. `set -a; . /root/backups/.env; set +a`).
+
+5) A User-Agent header is required (Cloudflare blocks default
+   urllib/python-requests UA). This script sends a browser UA.
+
+==========================================================
+
+This script implements steps 3-5 for the test-assistent-mcp-server.
+Run from the repo root with the SMITHERY_API_KEY exported.
 
 Usage:
     SMITHERY_API_KEY=... python scripts/smithery-deploy.py \
