@@ -3,6 +3,7 @@ name = "testassist-mcp"
 version = "0.1.0"
 description = "Test assistant MCP server for OpenCode"
 requires-python = ">=3.11"
+license = "MIT"
 dependencies = ["mcp==1.29.0"]
 
 [project.optional-dependencies]
