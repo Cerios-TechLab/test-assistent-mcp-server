@@ -96,7 +96,7 @@ De server werkt over stdio en wordt één-op-één gestart per MCP-client:
 
 Bij het starten:
 
-1. Wordt de kennisbasis geladen vanuit `knowledge/` (of uit `TESTASSIST_KNOWLEDGE_DIR` als die omgevingsvariabele is gezet).
+1. Wordt de kennisbasis geladen vanuit de embedded `server/knowledge/` map (optioneel overridbaar via `TESTASSIST_KNOWLEDGE_DIR`).
 2. Worden de 8 tools geregistreerd op de FastMCP-server.
 3. Wacht de server op JSON-RPC-berichten over stdin en antwoordt over stdout.
 

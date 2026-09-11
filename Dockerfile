@@ -8,7 +8,6 @@ COPY pyproject.toml .
 RUN pip install --no-cache-dir "mcp>=1.29.0,<2"
 
 ENV PYTHONPATH=/app
-ENV TESTASSIST_KNOWLEDGE_DIR=/app/server/knowledge
 
 # Run-time python differs per environment: after `uv sync` (Glama's build spec)
 # packages live in /app/.venv; after plain docker build they live in the system
