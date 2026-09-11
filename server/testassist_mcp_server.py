@@ -9,16 +9,20 @@ from mcp.server.fastmcp import FastMCP
 
 from server.advisor import advise, checklist
 from server.generate import (
-    generate_boundary_cases as generate_boundary_cases_fn,
     generate_random as generate_random_fn,
     generate_with_property as generate_with_property_fn,
 )
 from server.generators import (
     generate_boundary_value_analysis,
+    generate_decision_table,
     generate_equivalence_partitioning,
+    generate_error_guessing,
     generate_pairwise,
+    generate_state_transition,
+    generate_use_case,
 )
 from server.knowledge_base import KnowledgeBase
+from server.schemas import TechniqueCasesInput, TestDataInput
 
 mcp = FastMCP("testassist-mcp")
 
@@ -27,7 +31,11 @@ _REPO_ROOT_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 _TECHNIQUE_GENERATORS: dict[str, Callable[[dict], list[dict]]] = {
     "Boundary Value Analysis": generate_boundary_value_analysis,
     "Equivalence Partitioning": generate_equivalence_partitioning,
+    "Decision Table": generate_decision_table,
     "Pairwise Testing": generate_pairwise,
+    "State Transition": generate_state_transition,
+    "Use Case Testing": generate_use_case,
+    "Error Guessing": generate_error_guessing,
 }
 
 
@@ -51,17 +59,33 @@ def _build_tools(kb: KnowledgeBase) -> dict[str, Callable[..., Any]]:
         """List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours)."""
         return {"heuristics": kb.list_heuristics()}
 
-    def generate_test_cases(technique: str, inputs: dict) -> dict[str, Any]:
-        """Generate concrete testcases for a supported technique. Only returns testcases; the agent does the rest."""
-        generator = _TECHNIQUE_GENERATORS.get(technique)
-        if generator is None:
-            supported = ", ".join(sorted(_TECHNIQUE_GENERATORS))
-            raise ValueError(
-                f"Technique '{technique}' is not auto-generable here. "
-                f"Supported: {supported}. Others are available via catalog_techniques."
-            )
-        cases = generator(inputs)
-        return {"technique": technique, "testcases": cases}
+    def generate_test_cases(input: TechniqueCasesInput) -> dict[str, Any]:
+        """Generate concrete test cases using a classic test technique (Boundary Value Analysis, Equivalence Partitioning, Decision Table, Pairwise Testing, State Transition, Use Case Testing, Error Guessing). Each call targets exactly one technique. For raw typed test data (random rows or property-based), use generate_test_data instead."""
+        generator = _TECHNIQUE_GENERATORS.get(input.technique)
+        if generator is None:  # pragma: no cover — pydantic discriminator bewaakt dit
+            raise ValueError(f"Unknown technique: {input.technique}")
+        payload = input.model_dump(exclude={"technique"})
+        return {"technique": input.technique, "testcases": generator(payload)}
+
+    def generate_test_data(input: TestDataInput) -> dict[str, Any]:
+        """Generate raw test data (values), not technique-driven test cases. strategy='random' produces N seeded rows across multiple fields; strategy='property' produces boundary + random + invalid values for a single typed field. For classic techniques with expected outcomes, use generate_test_cases."""
+        if input.strategy == "random":
+            payload = {
+                "fields": [f.model_dump() for f in input.fields],
+                "count": input.count,
+                "seed": input.seed,
+            }
+            cases = generate_random_fn(payload)
+            return {"strategy": "random", "count": len(cases), "cases": cases}
+        payload = {
+            "field": input.field,
+            "type": input.type,
+            "constraints": input.constraints,
+            "count": input.count,
+            "seed": input.seed,
+            "include_invalid": input.include_invalid,
+        }
+        return {"strategy": "property", "field": input.field, "type": input.type, "cases": generate_with_property_fn(payload)}
 
     def advise_technique(description: str) -> dict[str, Any]:
         """Recommend techniques and heuristics for a described testing context via keyword analysis."""
@@ -71,28 +95,11 @@ def _build_tools(kb: KnowledgeBase) -> dict[str, Callable[..., Any]]:
         """Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression."""
         return checklist(kb, context)
 
-    def generate_with_property(spec: dict) -> dict[str, Any]:
-        """Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data."""
-        cases = generate_with_property_fn(spec)
-        return {"field": spec.get("field"), "type": spec.get("type", "string"), "cases": cases}
-
-    def generate_boundary_cases(spec: dict) -> dict[str, Any]:
-        """Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery."""
-        cases = generate_boundary_cases_fn(spec)
-        return {"field": spec.get("field"), "type": spec.get("type", "integer"), "cases": cases}
-
-    def generate_random(spec: dict) -> dict[str, Any]:
-        """Generate constrained random test data for multiple fields with optional seed for reproducibility."""
-        cases = generate_random_fn(spec)
-        return {"cases": cases}
-
     return {
         "catalog_techniques": catalog_techniques,
         "catalog_heuristics": catalog_heuristics,
         "generate_test_cases": generate_test_cases,
-        "generate_with_property": generate_with_property,
-        "generate_boundary_cases": generate_boundary_cases,
-        "generate_random": generate_random,
+        "generate_test_data": generate_test_data,
         "advise_technique": advise_technique,
         "checklist_for": checklist_for,
     }
