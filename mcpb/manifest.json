@@ -2,9 +2,9 @@
   "manifest_version": "0.4",
   "name": "test-assistent-mcp-server",
   "display_name": "Test Assistant MCP Server",
-  "version": "0.2.0",
-  "description": "MCP server for OpenCode that exposes classic test techniques (BVA, EP, pairwise, decision table, state transition, use case, error guessing), test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours), and property-based test data generation (boundary, random, seed) as 8 tools.",
-  "long_description": "A knowledge-based MCP server for OpenCode agents that provides:\n\n- **catalog_techniques**: list all classic test techniques\n- **catalog_heuristics**: list all test heuristics\n- **generate_test_cases**: generate concrete testcases for BVA, EP, and pairwise testing\n- **generate_with_property**: property-based test data with boundary discovery and seed reproducibility\n- **generate_boundary_cases**: automatic BVA for int, float, string, date types\n- **generate_random**: constrained random data generation with optional seed\n- **advise_technique**: keyword-based recommendation of techniques and heuristics\n- **checklist_for**: produce a test checklist for a given context\n\nThe knowledge base (7 techniques + 6 heuristics) is bundled as JSON and loaded at startup.",
+  "version": "1.1.0",
+  "description": "MCP server for OpenCode that exposes classic test techniques (7), test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours), and test data generation (random rows, property-based) as 6 tools.",
+  "long_description": "A knowledge-based MCP server for OpenCode agents that provides:\n\n- **catalog_techniques**: list all classic test techniques\n- **catalog_heuristics**: list all test heuristics\n- **generate_test_cases**: generate testcases for one classic technique at a time (Boundary Value Analysis, Equivalence Partitioning, Decision Table, Pairwise Testing, State Transition, Use Case Testing, Error Guessing) — Pydantic discriminated-union schema\n- **generate_test_data**: raw test data — strategy 'random' (N seeded multi-field rows) or 'property' (boundary + random + invalid for one typed field) — Pydantic discriminated-union schema\n- **advise_technique**: keyword-based recommendation of techniques and heuristics\n- **checklist_for**: produce a test checklist for a given context\n\nThe knowledge base (7 techniques + 6 heuristics) is bundled as JSON and loaded at startup.",
   "author": {
     "name": "Cerios TechLab",
     "url": "https://github.com/Cerios-TechLab"
@@ -40,7 +40,11 @@
     },
     {
       "name": "generate_test_cases",
-      "description": "Generate concrete testcases for supported techniques (Boundary Value Analysis, Equivalence Partitioning, Pairwise Testing). Returns only testcases; the agent applies them."
+      "description": "Generate concrete test cases using a classic test technique (Boundary Value Analysis, Equivalence Partitioning, Decision Table, Pairwise Testing, State Transition, Use Case Testing, Error Guessing). Each call targets exactly one technique."
+    },
+    {
+      "name": "generate_test_data",
+      "description": "Generate raw test data (values), not technique-driven test cases. strategy='random' produces N seeded rows; strategy='property' produces boundary + random + invalid values for a single typed field."
     },
     {
       "name": "advise_technique",
@@ -49,18 +53,6 @@
     {
       "name": "checklist_for",
       "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix."
-    },
-    {
-      "name": "generate_with_property",
-      "description": "Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data."
-    },
-    {
-      "name": "generate_boundary_cases",
-      "description": "Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery."
-    },
-    {
-      "name": "generate_random",
-      "description": "Generate constrained random test data for multiple fields with optional seed for reproducibility."
     }
   ],
   "keywords": [

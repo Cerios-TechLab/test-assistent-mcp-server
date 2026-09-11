@@ -1,103 +1,544 @@
 {
   "name": "test-assistent-mcp-server",
-  "version": "0.2.0",
+  "version": "1.1.0",
   "displayName": "Test Assistent MCP Server",
-  "description": "Test assistant MCP server for OpenCode — exposes classic test techniques, test heuristics, and property-based test data generation (boundary, random, seed) as tools, backed by a local knowledge base.",
+  "description": "Test assistant MCP server for OpenCode — exposes classic test techniques (7), test heuristics, and test data generation (random, property) as 6 tools, backed by a local knowledge base.",
   "tools": [
     {
       "name": "catalog_techniques",
-      "description": "List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing)."
+      "description": "List all classic test techniques (BVA, equivalence partitioning, decision table, pairwise, state transition, use case, error guessing).",
+      "inputSchema": {
+        "properties": {},
+        "title": "catalog_techniquesArguments",
+        "type": "object"
+      }
     },
     {
       "name": "catalog_heuristics",
-      "description": "List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours)."
+      "description": "List all test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria catalog, bug heuristics, test tours).",
+      "inputSchema": {
+        "properties": {},
+        "title": "catalog_heuristicsArguments",
+        "type": "object"
+      }
     },
     {
       "name": "generate_test_cases",
-      "description": "Generate concrete testcases for supported techniques (Boundary Value Analysis, Equivalence Partitioning, Pairwise Testing). Only returns testcases; the agent does the rest.",
+      "description": "Generate concrete test cases using a classic test technique (Boundary Value Analysis, Equivalence Partitioning, Decision Table, Pairwise Testing, State Transition, Use Case Testing, Error Guessing). Each call targets exactly one technique. For raw typed test data (random rows or property-based), use generate_test_data instead.",
       "inputSchema": {
-        "type": "object",
-        "properties": {
-          "technique": {
-            "type": "string",
-            "description": "The technique name: 'Boundary Value Analysis', 'Equivalence Partitioning', or 'Pairwise Testing'"
+        "$defs": {
+          "BoundaryValueSpec": {
+            "properties": {
+              "technique": {
+                "const": "Boundary Value Analysis",
+                "description": "Generate test cases around and beyond the min/max range edges",
+                "title": "Technique",
+                "type": "string"
+              },
+              "field": {
+                "description": "Field name",
+                "title": "Field",
+                "type": "string"
+              },
+              "min": {
+                "description": "Inclusive lower boundary",
+                "title": "Min",
+                "type": "integer"
+              },
+              "max": {
+                "description": "Inclusive upper boundary",
+                "title": "Max",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "technique",
+              "field",
+              "min",
+              "max"
+            ],
+            "title": "BoundaryValueSpec",
+            "type": "object"
           },
-          "inputs": {
-            "type": "object",
-            "description": "Technique-specific inputs, e.g. {field: 'age', min: 0, max: 150} for BVA"
+          "DecisionTableSpec": {
+            "properties": {
+              "technique": {
+                "const": "Decision Table",
+                "description": "Decision table with condition-action rules; one test case per rule",
+                "title": "Technique",
+                "type": "string"
+              },
+              "conditions": {
+                "description": "Condition names",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Conditions",
+                "type": "array"
+              },
+              "actions": {
+                "description": "Action names",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Actions",
+                "type": "array"
+              },
+              "rules": {
+                "description": "Rules, each {'when': {cond: value}, 'then': [action, ...]}",
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Rules",
+                "type": "array"
+              }
+            },
+            "required": [
+              "technique",
+              "conditions",
+              "actions"
+            ],
+            "title": "DecisionTableSpec",
+            "type": "object"
+          },
+          "EquivalenceSpec": {
+            "properties": {
+              "technique": {
+                "const": "Equivalence Partitioning",
+                "description": "One test case per explicit valid and invalid value",
+                "title": "Technique",
+                "type": "string"
+              },
+              "field": {
+                "description": "Field name",
+                "title": "Field",
+                "type": "string"
+              },
+              "valid": {
+                "description": "Values expected to be accepted",
+                "items": {},
+                "title": "Valid",
+                "type": "array"
+              },
+              "invalid": {
+                "description": "Values expected to be rejected",
+                "items": {},
+                "title": "Invalid",
+                "type": "array"
+              }
+            },
+            "required": [
+              "technique",
+              "field",
+              "valid",
+              "invalid"
+            ],
+            "title": "EquivalenceSpec",
+            "type": "object"
+          },
+          "ErrorGuessingSpec": {
+            "properties": {
+              "technique": {
+                "const": "Error Guessing",
+                "description": "Negative test cases from known error-prone pitfalls",
+                "title": "Technique",
+                "type": "string"
+              },
+              "field": {
+                "description": "Field name",
+                "title": "Field",
+                "type": "string"
+              },
+              "input": {
+                "description": "A representative valid value",
+                "title": "Input"
+              },
+              "pitfalls": {
+                "description": "Known error-prone values to try",
+                "items": {},
+                "title": "Pitfalls",
+                "type": "array"
+              }
+            },
+            "required": [
+              "technique",
+              "field",
+              "input",
+              "pitfalls"
+            ],
+            "title": "ErrorGuessingSpec",
+            "type": "object"
+          },
+          "PairwiseSpec": {
+            "properties": {
+              "technique": {
+                "const": "Pairwise Testing",
+                "description": "All-pairs covering set of parameter combinations",
+                "title": "Technique",
+                "type": "string"
+              },
+              "values": {
+                "additionalProperties": {
+                  "items": {},
+                  "type": "array"
+                },
+                "description": "Map of parameter name to list of values to combine",
+                "title": "Values",
+                "type": "object"
+              }
+            },
+            "required": [
+              "technique",
+              "values"
+            ],
+            "title": "PairwiseSpec",
+            "type": "object"
+          },
+          "StateTransitionSpec": {
+            "properties": {
+              "technique": {
+                "const": "State Transition",
+                "description": "State-event transitions; one test case per transition",
+                "title": "Technique",
+                "type": "string"
+              },
+              "states": {
+                "description": "Possible states",
+                "items": {
+                  "type": "string"
+                },
+                "title": "States",
+                "type": "array"
+              },
+              "events": {
+                "description": "Possible events",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Events",
+                "type": "array"
+              },
+              "transitions": {
+                "description": "Transitions, each {'state': s, 'event': e, 'next': n}",
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "title": "Transitions",
+                "type": "array"
+              }
+            },
+            "required": [
+              "technique",
+              "states",
+              "events"
+            ],
+            "title": "StateTransitionSpec",
+            "type": "object"
+          },
+          "UseCaseSpec": {
+            "properties": {
+              "technique": {
+                "const": "Use Case Testing",
+                "description": "End-to-end use case steps; one test case per step",
+                "title": "Technique",
+                "type": "string"
+              },
+              "name": {
+                "description": "Use case name",
+                "title": "Name",
+                "type": "string"
+              },
+              "steps": {
+                "description": "Ordered steps of the use case",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Steps",
+                "type": "array"
+              },
+              "expected": {
+                "description": "Expected outcomes per step (parallel to steps)",
+                "items": {
+                  "type": "string"
+                },
+                "title": "Expected",
+                "type": "array"
+              }
+            },
+            "required": [
+              "technique",
+              "name",
+              "steps"
+            ],
+            "title": "UseCaseSpec",
+            "type": "object"
           }
         },
-        "required": ["technique", "inputs"]
+        "properties": {
+          "input": {
+            "discriminator": {
+              "mapping": {
+                "Boundary Value Analysis": "#/$defs/BoundaryValueSpec",
+                "Decision Table": "#/$defs/DecisionTableSpec",
+                "Equivalence Partitioning": "#/$defs/EquivalenceSpec",
+                "Error Guessing": "#/$defs/ErrorGuessingSpec",
+                "Pairwise Testing": "#/$defs/PairwiseSpec",
+                "State Transition": "#/$defs/StateTransitionSpec",
+                "Use Case Testing": "#/$defs/UseCaseSpec"
+              },
+              "propertyName": "technique"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/BoundaryValueSpec"
+              },
+              {
+                "$ref": "#/$defs/EquivalenceSpec"
+              },
+              {
+                "$ref": "#/$defs/DecisionTableSpec"
+              },
+              {
+                "$ref": "#/$defs/PairwiseSpec"
+              },
+              {
+                "$ref": "#/$defs/StateTransitionSpec"
+              },
+              {
+                "$ref": "#/$defs/UseCaseSpec"
+              },
+              {
+                "$ref": "#/$defs/ErrorGuessingSpec"
+              }
+            ],
+            "title": "Input"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "title": "generate_test_casesArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "generate_test_data",
+      "description": "Generate raw test data (values), not technique-driven test cases. strategy='random' produces N seeded rows across multiple fields; strategy='property' produces boundary + random + invalid values for a single typed field. For classic techniques with expected outcomes, use generate_test_cases.",
+      "inputSchema": {
+        "$defs": {
+          "FieldSpec": {
+            "properties": {
+              "field": {
+                "description": "Field name",
+                "title": "Field",
+                "type": "string"
+              },
+              "type": {
+                "default": "string",
+                "description": "Field data type",
+                "enum": [
+                  "integer",
+                  "float",
+                  "string",
+                  "boolean",
+                  "date"
+                ],
+                "title": "Type",
+                "type": "string"
+              },
+              "constraints": {
+                "additionalProperties": true,
+                "description": "Type-specific constraints: min, max, min_length, max_length, pattern",
+                "title": "Constraints",
+                "type": "object"
+              }
+            },
+            "required": [
+              "field"
+            ],
+            "title": "FieldSpec",
+            "type": "object"
+          },
+          "PropertyDataSpec": {
+            "properties": {
+              "strategy": {
+                "const": "property",
+                "description": "Generate property-based values for a single field: boundary + random + invalid",
+                "title": "Strategy",
+                "type": "string"
+              },
+              "field": {
+                "description": "Field name",
+                "title": "Field",
+                "type": "string"
+              },
+              "type": {
+                "default": "integer",
+                "description": "Field data type",
+                "enum": [
+                  "integer",
+                  "float",
+                  "string",
+                  "boolean",
+                  "date"
+                ],
+                "title": "Type",
+                "type": "string"
+              },
+              "constraints": {
+                "additionalProperties": true,
+                "description": "Type-specific constraints: min, max, min_length, max_length, pattern",
+                "title": "Constraints",
+                "type": "object"
+              },
+              "count": {
+                "default": 10,
+                "description": "Target number of cases",
+                "maximum": 500,
+                "minimum": 1,
+                "title": "Count",
+                "type": "integer"
+              },
+              "seed": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Seed for reproducible output",
+                "title": "Seed"
+              },
+              "include_invalid": {
+                "default": true,
+                "description": "Also generate constraint-violating values",
+                "title": "Include Invalid",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "strategy",
+              "field"
+            ],
+            "title": "PropertyDataSpec",
+            "type": "object"
+          },
+          "RandomDataSpec": {
+            "properties": {
+              "strategy": {
+                "const": "random",
+                "description": "Generate N random rows for multiple fields, optionally seeded",
+                "title": "Strategy",
+                "type": "string"
+              },
+              "fields": {
+                "description": "Fields to generate values for",
+                "items": {
+                  "$ref": "#/$defs/FieldSpec"
+                },
+                "title": "Fields",
+                "type": "array"
+              },
+              "count": {
+                "default": 10,
+                "description": "Number of rows to generate",
+                "maximum": 500,
+                "minimum": 1,
+                "title": "Count",
+                "type": "integer"
+              },
+              "seed": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "description": "Seed for reproducible output",
+                "title": "Seed"
+              }
+            },
+            "required": [
+              "strategy",
+              "fields"
+            ],
+            "title": "RandomDataSpec",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "input": {
+            "discriminator": {
+              "mapping": {
+                "property": "#/$defs/PropertyDataSpec",
+                "random": "#/$defs/RandomDataSpec"
+              },
+              "propertyName": "strategy"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/RandomDataSpec"
+              },
+              {
+                "$ref": "#/$defs/PropertyDataSpec"
+              }
+            ],
+            "title": "Input"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "title": "generate_test_dataArguments",
+        "type": "object"
       }
     },
     {
       "name": "advise_technique",
       "description": "Recommend techniques and heuristics for a described testing context via keyword analysis.",
       "inputSchema": {
-        "type": "object",
         "properties": {
           "description": {
-            "type": "string",
-            "description": "Free-text description of the testing context or problem"
+            "title": "Description",
+            "type": "string"
           }
         },
-        "required": ["description"]
+        "required": [
+          "description"
+        ],
+        "title": "advise_techniqueArguments",
+        "type": "object"
       }
     },
     {
       "name": "checklist_for",
-      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression after a bug fix.",
+      "description": "Produce a recommended test checklist (items) for a context, e.g. RCRCRC for regression.",
       "inputSchema": {
-        "type": "object",
         "properties": {
           "context": {
-            "type": "string",
-            "description": "The testing context, e.g. 'regression', 'exploratory testing', 'no specification'"
+            "title": "Context",
+            "type": "string"
           }
         },
-        "required": ["context"]
-      }
-    },
-    {
-      "name": "generate_with_property",
-      "description": "Property-based test data generation. Defines a field with type, constraints, and count, returns test cases including boundary values and random data.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "object",
-            "description": "Property spec: {field, type, constraints: {min, max, ...}, count, seed}"
-          }
-        },
-        "required": ["spec"]
-      }
-    },
-    {
-      "name": "generate_boundary_cases",
-      "description": "Generate boundary value test cases for a field. Supports int, float, string, date types with automatic edge case discovery.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "object",
-            "description": "Boundary spec: {field, type, constraints: {min, max, ...}}"
-          }
-        },
-        "required": ["spec"]
-      }
-    },
-    {
-      "name": "generate_random",
-      "description": "Generate constrained random test data for multiple fields with optional seed for reproducibility.",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "spec": {
-            "type": "object",
-            "description": "Random spec: {fields: [{field, type, constraints}], count, seed}"
-          }
-        },
-        "required": ["spec"]
+        "required": [
+          "context"
+        ],
+        "title": "checklist_forArguments",
+        "type": "object"
       }
     }
   ]

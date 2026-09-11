@@ -14,8 +14,8 @@ De server ontsluit twee soorten kennis:
 Een agent kan hieruit:
 
 - technieken en heuristieken **catalogiseren**;
-- **testcases genereren** voor de ondersteunde technieken (BVA, EP, pairwise);
-- **property-based testdata** genereren met boundary discovery, constrained random en seed-reproduceerbaarheid;
+- **testcases genereren** voor alle 7 technieken (BVA, EP, decision table, pairwise, state transition, use case, error guessing);
+- **ruwe testdata** genereren: random rijen of property-based (boundary + random + invalid, seed-reproduceerbaar);
 - advies vragen over welke techniek/heuristiek past bij een omschreven context;
 - een concrete **checklist** ontvangen (bijv. RCRCRC voor regressietesten).
 
@@ -27,21 +27,21 @@ Al deze kennis leeft als JSON in de map `knowledge/` en wordt gelezen door de se
 |---|---|---|
 | `catalog_techniques` | — | Lijst alle klassieke testtechnieken op. |
 | `catalog_heuristics` | — | Lijst alle testheuristieken op. |
-| `generate_test_cases` | `technique` (str), `inputs` (dict) | Genereert concrete testcases voor BVA, Equivalence Partitioning en Pairwise Testing. Geeft alleen testcases terug; de agent doet de rest. |
-| `generate_with_property` | `spec` (dict) | Property-based testdata: boundary + random met seed. Ondersteunt int, float, string, date, boolean met constraints. |
-| `generate_boundary_cases` | `spec` (dict) | Automatische BVA voor int/float/string/date. Genereert edge cases op basis van type en constraints. |
-| `generate_random` | `spec` (dict) | Constrained random data voor meerdere velden, optioneel met seed voor reproduceerbaarheid. |
+| `generate_test_cases` | `input` (technique-union) | Genereert testcases voor één klassieke techniek: BVA, Equivalence Partitioning, Decision Table, Pairwise, State Transition, Use Case, Error Guessing. Geeft alleen testcases terug. |
+| `generate_test_data` | `input` (strategy-union) | Genereert ruwe testdata: `random` (N rijen, multi-veld, seed) of `property` (boundary + random + invalid per veld). Niet techniek-gestuurd. |
 | `advise_technique` | `description` (str) | Beveelt op basis van sleutelwoorden technieken en heuristieken aan voor een omschreven context. |
 | `checklist_for` | `context` (str) | Levert een aanbevolen test-checklist op (items) voor een context, bijv. RCRCRC voor regressie. |
+
+Input-schema's zijn Pydantic discriminated-union-schemas (één `input`-object met `technique`- resp. `strategy`-discriminator); ongeldige technieken/strategies worden door schema-validatie afgewezen.
 
 ### Voorbeelden van gebruik
 
 - `catalog_techniques()` → catalogus van alle 7 technieken.
 - `catalog_heuristics()` → catalogus van alle 6 heuristieken.
-- `generate_test_cases("Boundary Value Analysis", {"field": "age", "min": 0, "max": 150})` → BVA-testcases rond de grenzen `-1, 0, 1, 149, 150, 151`.
-- `generate_with_property({"field": "age", "type": "integer", "constraints": {"min": 0, "max": 150}, "count": 10})` → 10 property-based testcases met boundaries + random samples.
-- `generate_boundary_cases({"field": "email", "type": "string", "constraints": {"max_length": 254}})` → edge cases voor strings (empty, special chars, unicode, SQL injection).
-- `generate_random({"fields": [{"field": "name", "type": "string"}, {"field": "age", "type": "integer", "constraints": {"min": 0, "max": 120}}], "count": 5, "seed": 42})` → 5 reproduceerbare testrijen.
+- `generate_test_cases({"technique": "Boundary Value Analysis", "field": "age", "min": 0, "max": 150})` → BVA-testcases rond de grenzen `-1, 0, 1, 149, 150, 151`.
+- `generate_test_cases({"technique": "Decision Table", "conditions": ["pays"], "actions": ["ship"], "rules": [{"when": {"pays": "yes"}, "then": ["ship"]}]})` → één case per regel.
+- `generate_test_data({"strategy": "property", "field": "age", "type": "integer", "constraints": {"min": 0, "max": 150}, "count": 10})` → boundary + random + invalid.
+- `generate_test_data({"strategy": "random", "fields": [{"field": "name", "type": "string"}, {"field": "age", "type": "integer", "constraints": {"min": 0, "max": 120}}], "count": 5, "seed": 42})` → 5 reproduceerbare testrijen.
 - `advise_technique("regression after a bug fix")` → beveelt o.a. RCRCRC aan.
 - `checklist_for("regression")` → RCRCRC-checklist met items.
 
@@ -97,7 +97,7 @@ De server werkt over stdio en wordt één-op-één gestart per MCP-client:
 Bij het starten:
 
 1. Wordt de kennisbasis geladen vanuit de embedded `server/knowledge/` map (optioneel overridbaar via `TESTASSIST_KNOWLEDGE_DIR`).
-2. Worden de 8 tools geregistreerd op de FastMCP-server.
+2. Worden de 6 tools geregistreerd op de FastMCP-server.
 3. Wacht de server op JSON-RPC-berichten over stdin en antwoordt over stdout.
 
 ### Registeren in OpenCode
@@ -122,7 +122,7 @@ Omdat MCP-stdio eerst een `initialize`-handshake vereist vóór `tools/list`, te
 { printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"smoke","version":"0"}}}'; printf '%s\n' '{"jsonrpc":"2.0","method":"notifications/initialized"}'; printf '%s\n' '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'; } | timeout 15 .venv/bin/python server/testassist_mcp_server.py
 ```
 
-Je verwacht een JSON-antwoord waarvan `result.tools` 8 tools bevat (catalog_techniques, catalog_heuristics, generate_test_cases, generate_with_property, generate_boundary_cases, generate_random, advise_technique, checklist_for) met non-empty descriptions.
+Je verwacht een JSON-antwoord waarvan `result.tools` 6 tools bevat (catalog_techniques, catalog_heuristics, generate_test_cases, generate_test_data, advise_technique, checklist_for) met non-empty descriptions.
 
 ## Kennisbasis
 
@@ -158,10 +158,11 @@ Dit eindigt met exit-code 0 bij een geldige kennisbasis en met een fout bij een 
 test-assistent-mcp-server/
 ├── server/
 │   ├── knowledge_base.py          # laadt en ontsluit de JSON-kennisbasis
-│   ├── generators.py              # pure testcase-generatie (BVA, EP, pairwise)
+│   ├── schemas.py                 # Pydantic discriminated-union input-schema's
+│   ├── generators.py              # pure testcase-generatie voor alle 7 technieken
 │   ├── generate.py                # property-based testdata engine (boundary, random, seed)
 │   ├── advisor.py                 # keyword-gebaseerde advise/checklist-logica
-│   └── testassist_mcp_server.py  # FastMCP stdio-server die de 8 tools wiret
+│   └── testassist_mcp_server.py  # FastMCP stdio-server die de 6 tools wiret
 ├── knowledge/
 │   ├── techniques/                # 7 techniekbestanden (JSON)
 │   └── heuristics/               # 6 heuristiekbestanden (JSON)
@@ -170,5 +171,5 @@ test-assistent-mcp-server/
 │   └── server/                   # kopie van server/ + knowledge/ voor distributie
 ├── scripts/
 │   └── harvest.py                # valideert kennisbasis en print index
-└── tests/                        # pytest-suite (31 tests)
+└── tests/                        # pytest-suite (42 tests)
 ```
