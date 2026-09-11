@@ -11,7 +11,7 @@ from pathlib import Path
 from server.knowledge_base import KnowledgeBase
 
 ROOT = Path(__file__).resolve().parents[1]
-KNOWLEDGE_DIR = ROOT / "knowledge"
+KNOWLEDGE_DIR = ROOT / "server" / "knowledge"
 
 
 def main() -> int:

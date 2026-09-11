@@ -16,6 +16,12 @@ dev = ["pytest"]
 [tool.setuptools]
 packages = ["server"]
 
+[tool.setuptools.package-data]
+server = [
+    "knowledge/techniques/*.json",
+    "knowledge/heuristics/*.json",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

@@ -5,7 +5,7 @@ from server.knowledge_base import KnowledgeBase
 
 
 def test_build_tools_exposes_eight():
-    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
     tools = _build_tools(kb)
     assert set(tools) == {"catalog_techniques", "catalog_heuristics",
                           "generate_test_cases", "generate_with_property",
@@ -14,7 +14,7 @@ def test_build_tools_exposes_eight():
 
 
 def test_generate_test_cases_bva():
-    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
     tools = _build_tools(kb)
     out = tools["generate_test_cases"]("Boundary Value Analysis", {"field": "age", "min": 0, "max": 150})
     assert out["technique"] == "Boundary Value Analysis"
@@ -22,14 +22,14 @@ def test_generate_test_cases_bva():
 
 
 def test_advise_technique_smoke():
-    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
     tools = _build_tools(kb)
     out = tools["advise_technique"]("regression after a bug fix")
     assert "RCRCRC" in out["heuristics"]
 
 
 def test_checklist_for_regression():
-    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
     tools = _build_tools(kb)
     out = tools["checklist_for"]("regression")
     assert out["heuristic"] == "RCRCRC"

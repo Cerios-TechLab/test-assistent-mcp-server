@@ -26,7 +26,7 @@ def main() -> int:
     env = {
         **os.environ,
         "PYTHONPATH": str(script_dir),
-        "TESTASSIST_KNOWLEDGE_DIR": str(script_dir / "knowledge"),
+        "TESTASSIST_KNOWLEDGE_DIR": str(script_dir / "server" / "knowledge"),
     }
 
     proc = subprocess.Popen(

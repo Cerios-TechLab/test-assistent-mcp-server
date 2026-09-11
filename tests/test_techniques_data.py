@@ -8,7 +8,7 @@ EXPECTED = {"Boundary Value Analysis", "Equivalence Partitioning", "Decision Tab
 
 
 def test_all_techniques_well_formed():
-    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
     names = kb.technique_names()
     assert set(names) == EXPECTED
     for t in kb.list_techniques():

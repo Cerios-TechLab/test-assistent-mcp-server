@@ -22,7 +22,8 @@ from server.knowledge_base import KnowledgeBase
 
 mcp = FastMCP("testassist-mcp")
 
-_DEFAULT_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
+_DEFAULT_KNOWLEDGE_DIR = Path(__file__).resolve().parent / "knowledge"
+_REPO_ROOT_KNOWLEDGE_DIR = Path(__file__).resolve().parents[1] / "knowledge"
 _TECHNIQUE_GENERATORS: dict[str, Callable[[dict], list[dict]]] = {
     "Boundary Value Analysis": generate_boundary_value_analysis,
     "Equivalence Partitioning": generate_equivalence_partitioning,
@@ -32,7 +33,12 @@ _TECHNIQUE_GENERATORS: dict[str, Callable[[dict], list[dict]]] = {
 
 def _load_kb() -> KnowledgeBase:
     override = os.environ.get("TESTASSIST_KNOWLEDGE_DIR")
-    base = Path(override) if override else _DEFAULT_KNOWLEDGE_DIR
+    if override:
+        base = Path(override)
+    elif _DEFAULT_KNOWLEDGE_DIR.is_dir():
+        base = _DEFAULT_KNOWLEDGE_DIR
+    else:
+        base = _REPO_ROOT_KNOWLEDGE_DIR
     return KnowledgeBase(base)
 
 

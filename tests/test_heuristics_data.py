@@ -8,7 +8,7 @@ EXPECTED = {"SFDPOT", "FEW HICCUPPS", "RCRCRC", "Quality Criteria Catalog",
 
 
 def test_all_heuristics_well_formed():
-    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+    kb = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
     names = kb.heuristic_names()
     assert set(names) == EXPECTED
     for h in kb.list_heuristics():

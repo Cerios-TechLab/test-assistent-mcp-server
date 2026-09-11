@@ -3,7 +3,7 @@ from pathlib import Path
 from server.advisor import advise, checklist
 from server.knowledge_base import KnowledgeBase
 
-KB = KnowledgeBase(Path(__file__).resolve().parents[1] / "knowledge")
+KB = KnowledgeBase(Path(__file__).resolve().parents[1] / "server" / "knowledge")
 
 
 def test_advise_regression_picks_rcrcrc():
