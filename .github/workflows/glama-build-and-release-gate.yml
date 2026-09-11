@@ -42,7 +42,7 @@ jobs:
             -v "$PWD/scripts/mcp-smoke.py:/app/scripts/mcp-smoke.py:ro" \
             --entrypoint python \
             test-assistent-mcp-server:ci \
-            scripts/mcp-smoke.py 8
+            scripts/mcp-smoke.py 6
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')

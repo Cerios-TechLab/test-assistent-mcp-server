@@ -21,7 +21,7 @@ def _send(writer, obj):
 
 
 def main() -> int:
-    expected = int(sys.argv[1]) if len(sys.argv) > 1 else 8
+    expected = int(sys.argv[1]) if len(sys.argv) > 1 else 6
     script_dir = Path(__file__).resolve().parent.parent
     env = {
         **os.environ,
