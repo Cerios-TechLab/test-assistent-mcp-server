@@ -9,6 +9,9 @@ dependencies = ["mcp==1.29.0"]
 [project.optional-dependencies]
 dev = ["pytest"]
 
+[tool.setuptools]
+packages = ["server"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
