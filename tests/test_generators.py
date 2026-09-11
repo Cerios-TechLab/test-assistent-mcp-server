@@ -1,6 +1,14 @@
 import itertools
 
-from server.generators import generate_boundary_value_analysis, generate_equivalence_partitioning, generate_pairwise
+from server.generators import (
+    generate_boundary_value_analysis,
+    generate_decision_table,
+    generate_equivalence_partitioning,
+    generate_error_guessing,
+    generate_pairwise,
+    generate_state_transition,
+    generate_use_case,
+)
 
 
 def test_bva_covers_boundaries():
@@ -43,3 +51,60 @@ def test_pairwise_covers_all_pairs():
             for y in vb:
                 expected_pairs.add(frozenset([((ka, x)), ((kb, y))]))
     assert covered_pairs >= expected_pairs
+
+
+def test_decision_table_one_case_per_rule():
+    spec = {
+        "conditions": ["pays", "member"],
+        "actions": ["ship", "charge", "waive"],
+        "rules": [
+            {"when": {"pays": "yes", "member": "no"}, "then": ["ship", "charge"]},
+            {"when": {"pays": "yes", "member": "yes"}, "then": ["ship"]},
+        ],
+    }
+    cases = generate_decision_table(spec)
+    assert len(cases) == 2
+    assert all(c["id"].startswith("DT-") for c in cases)
+    assert cases[0]["input"] == {"pays": "yes", "member": "no"}
+    assert cases[0]["expected"] == "ship, charge"
+
+
+def test_state_transition_one_case_per_transition():
+    spec = {
+        "states": ["idle", "active"],
+        "events": ["start", "stop"],
+        "transitions": [
+            {"state": "idle", "event": "start", "next": "active"},
+            {"state": "active", "event": "stop", "next": "idle"},
+        ],
+    }
+    cases = generate_state_transition(spec)
+    assert len(cases) == 2
+    assert all(c["id"].startswith("ST-") for c in cases)
+    assert cases[0]["input"] == {"state": "idle", "event": "start"}
+    assert cases[0]["expected"] == "active"
+
+
+def test_use_case_one_case_per_step_and_fallback_expected():
+    cases = generate_use_case({
+        "name": "login",
+        "steps": ["open page", "submit credentials"],
+        "expected": ["page opens"],
+    })
+    assert len(cases) == 2
+    assert all(c["id"].startswith("UC-") for c in cases)
+    assert cases[0]["expected"] == "page opens"
+    assert cases[1]["expected"]  # fallback not empty
+
+
+def test_error_guessing_one_negative_case_per_pitfall():
+    cases = generate_error_guessing({
+        "field": "email",
+        "input": "a@b.c",
+        "pitfalls": ["", "x", "<script>"],
+    })
+    assert len(cases) == 3
+    assert all(c["id"].startswith("EG-") for c in cases)
+    for c in cases:
+        assert "email" in c["input"]
+    assert cases[0]["expected"] != cases[1]["expected"]  # elke valkuil heeft eigen expected (payload = pitfall)
