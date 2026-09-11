@@ -1,4 +1,4 @@
-name: glama-build-gate
+name: glama-build-and-release-gate
 
 on:
   push:
@@ -69,3 +69,5 @@ jobs:
 
       - name: Create GitHub Release
         run: gh release create "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

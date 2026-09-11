@@ -1,10 +1,10 @@
-# Tag-Driven Releases via glama-build-gate — Implementation Plan
+# Tag-Driven Releases via glama-build-and-release-gate — Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Een `v*`-tag die door de volledige glama-build-gate komt, publiceert automatisch een GitHub release (versie-tracker).
 
-**Architecture:** De bestaande `glama-build-gate.yml`-workflow krijgt een tag-filter (`v*`) op de push-trigger plus een nieuwe `release`-job die na de `verify`-job draait. De release-job checkt dat de tag-versie gelijk is aan de package-versie in `pyproject.toml` en maakt dan `gh release create` aan met automatisch gegenereerde notes. De gate blijft de enige kwaliteitspoort.
+**Architecture:** De bestaande `glama-build-and-release-gate.yml`-workflow krijgt een tag-filter (`v*`) op de push-trigger plus een nieuwe `release`-job die na de `verify`-job draait. De release-job checkt dat de tag-versie gelijk is aan de package-versie in `pyproject.toml` en maakt dan `gh release create` aan met automatisch gegenereerde notes. De gate blijft de enige kwaliteitspoort.
 
 **Tech Stack:** GitHub Actions, `gh` CLI (voorgeïnstalleerd op runners), `GITHUB_TOKEN` (auto), YAML, shell.
 

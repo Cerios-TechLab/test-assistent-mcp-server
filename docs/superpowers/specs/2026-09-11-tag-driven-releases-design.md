@@ -1,4 +1,4 @@
-# Tag-driven GitHub releases via glama-build-gate
+# Tag-driven GitHub releases via glama-build-and-release-gate
 
 Datum: 2026-09-11
 Status: goedgekeurd (brainstorm)
@@ -15,14 +15,14 @@ duidelijk welke code en welke package-versie erop Glama/Smithery draait.
 - **Doel**: versie-tracker, geen installatie-artefacten.
 - **Trigger**: tag-driven. Een handmatig geprikte tag `v*` (b.v. `v0.2.0`)
   triggert de release.
-- **Integratie**: de bestaande `glama-build-gate`-workflow wordt uitgebreid;
+- **Integratie**: de bestaande `glama-build-and-release-gate`-workflow wordt uitgebreid;
   de gate blijft de enige kwaliteitspoort. Geen aparte release-workflow.
 
 ## Werkingsmechanisme
 
 ### Trigger
 
-Aan `on.push` in `glama-build-gate.yml` wordt een tag-filter toegevoegd:
+Aan `on.push` in `glama-build-and-release-gate.yml` wordt een tag-filter toegevoegd:
 
 ```yaml
 on:
@@ -96,7 +96,7 @@ package-versie overeenkomen:
 
 ## Nieuw te schrijven / wijzigen
 
-- `glama-build-gate.yml`: tag-filter in trigger + job `release`.
+- `glama-build-and-release-gate.yml`: tag-filter in trigger + job `release`.
 - Geen Python-wijzigingen aan de server; release-logica is pure werkflow.
 
 ## Acceptatiecriteria

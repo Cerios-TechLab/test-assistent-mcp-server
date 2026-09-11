@@ -1,6 +1,6 @@
 [project]
 name = "test-assistent-mcp-server"
-version = "0.1.0"
+version = "1.0.0"
 description = "MCP server for OpenCode that exposes classic test techniques and heuristics as tools."
 requires-python = ">=3.11"
 dependencies = [
