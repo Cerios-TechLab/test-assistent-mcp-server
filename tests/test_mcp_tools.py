@@ -1,5 +1,6 @@
 """Tool-registry and schema-shape tests for the 6-tool testassist server."""
 import asyncio
+import itertools
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,31 @@ def test_generate_test_cases_all_techniques():
         out = tools["generate_test_cases"](cases_adapter.validate_python(spec))
         assert out["technique"] == spec["technique"]
         assert out["testcases"], f"no cases for {spec['technique']}"
+
+
+def test_generate_test_cases_pairwise_covers_all_pairs():
+    tools = _build_tools(KB)
+    cases_adapter = TypeAdapter(TechniqueCasesInput)
+    params = {"browser": ["c", "f", "s"], "os": ["lin", "win", "mac"], "screen": ["small", "large"]}
+    out = tools["generate_test_cases"](
+        cases_adapter.validate_python({"technique": "Pairwise Testing", "values": params})
+    )
+    rows = out["testcases"]
+    assert len(rows) >= 1
+    for row in rows:
+        assert set(row) == set(params), f"row keys must match declared params, got {row}"
+        for key, value in row.items():
+            assert value in params[key], f"value {value!r} not in declared values for {key}"
+    covered = set()
+    for row in rows:
+        for a, b in itertools.combinations(row.items(), 2):
+            covered.add(frozenset([a, b]))
+    expected = set()
+    for (ka, va), (kb, vb) in itertools.combinations(params.items(), 2):
+        for x in va:
+            for y in vb:
+                expected.add(frozenset([(ka, x), (kb, y)]))
+    assert covered >= expected, "pairwise set does not cover all pairs"
 
 
 def test_generate_test_data_random_and_property():

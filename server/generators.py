@@ -29,10 +29,11 @@ def generate_equivalence_partitioning(spec: dict[str, Any]) -> list[dict[str, An
     return cases
 
 
-def generate_pairwise(values: dict[str, list]) -> list[dict[str, str]]:
-    """Greedy all-pairs covering set. values: {param: [values]} -> rows of {param: value}."""
+def generate_pairwise(spec: dict[str, Any]) -> list[dict[str, Any]]:
+    """Greedy all-pairs covering set. spec: {values: {param: [values]}} -> rows of {param: value}."""
+    values = spec["values"]
     params = list(values)
-    rows: list[dict[str, str]] = []
+    rows: list[dict[str, Any]] = []
     covered: set[frozenset] = set()
     possible = []
     for combo in itertools.product(*[values[p] for p in params]):

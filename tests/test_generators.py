@@ -40,7 +40,7 @@ def test_ep_covers_partitions():
 
 def test_pairwise_covers_all_pairs():
     values = {"browser": ["c", "f", "s"], "os": ["lin", "win", "mac"], "screen": ["small", "large"]}
-    rows = generate_pairwise(values)
+    rows = generate_pairwise({"values": values})
     covered_pairs = set()
     for row in rows:
         for a, b in itertools.combinations(row.items(), 2):
