@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "test-assistent-mcp-server",
   "display_name": "Test Assistant MCP Server",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "MCP server for OpenCode that exposes classic test techniques (7), test heuristics (SFDPOT, FEW HICCUPPS, RCRCRC, quality criteria, bug heuristics, test tours), and test data generation (random rows, property-based) as 6 tools.",
   "long_description": "A knowledge-based MCP server for OpenCode agents that provides:\n\n- **catalog_techniques**: list all classic test techniques\n- **catalog_heuristics**: list all test heuristics\n- **generate_test_cases**: generate testcases for one classic technique at a time (Boundary Value Analysis, Equivalence Partitioning, Decision Table, Pairwise Testing, State Transition, Use Case Testing, Error Guessing) — Pydantic discriminated-union schema\n- **generate_test_data**: raw test data — strategy 'random' (N seeded multi-field rows) or 'property' (boundary + random + invalid for one typed field) — Pydantic discriminated-union schema\n- **advise_technique**: keyword-based recommendation of techniques and heuristics\n- **checklist_for**: produce a test checklist for a given context\n\nThe knowledge base (7 techniques + 6 heuristics) is bundled as JSON and loaded at startup.",
   "author": {
